@@ -1,0 +1,3690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Romanix</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script src="paletizacao.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface2: #111411;
+    --border: #1a2e1a;
+    --accent: #39ff14;
+    --accent2: #00e676;
+    --text: #d4f5d4;
+    --muted: #4a7a4a;
+    --danger: #ff4444;
+    --success: #39ff14;
+    --radius: 6px;
+  }
+
+  body.light-theme {
+    --bg: #f4f6f4;
+    --surface: #ffffff;
+    --surface2: #eef2ee;
+    --border: #c8d8c8;
+    --accent: #1a8a00;
+    --accent2: #0a7a00;
+    --text: #1a2e1a;
+    --muted: #5a7a5a;
+    --danger: #cc2222;
+    --success: #1a8a00;
+  }
+  body.light-theme header { background: #fff; border-bottom-color: #c8d8c8; }
+  body.light-theme .logo { text-shadow: none; }
+  body.light-theme .card-value { text-shadow: none; }
+  body.light-theme thead th { text-shadow: none; }
+  body.light-theme .tag { background: #d4ecd4; color: #1a5a00; }
+  body.light-theme .count-badge { box-shadow: none; }
+  body.light-theme .cep-card { box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  body.light-theme .ind-card-title { text-shadow: none; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #000;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px #39ff14, 0 0 30px #39ff1466;
+  }
+  header .logo span { color: var(--accent); font-weight: 600; letter-spacing: 4px; }
+  header .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-left: auto;
+    letter-spacing: 1px;
+  }
+
+  /* ── Upload Zone ── */
+  .upload-zone {
+    margin: 32px 28px;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: var(--surface);
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: #0a120a;
+    box-shadow: 0 0 20px #39ff1422;
+  }
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .upload-zone h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .upload-zone p {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .upload-zone .file-types {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+  }
+
+  /* ── Status bar ── */
+  #status-bar {
+    margin: 0 28px 20px;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+  #status-bar.show { display: flex; }
+  #status-bar .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.2s ease infinite;
+    flex-shrink: 0;
+  }
+  #status-bar.done .dot { background: var(--success); animation: none; }
+  #status-bar.error .dot { background: var(--danger); animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── Summary Cards ── */
+  #summary {
+    display: none;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 0 28px 24px;
+  }
+  #summary.show { display: grid; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .card .card-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
+  .card .card-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    text-shadow: 0 0 10px #39ff1499;
+  }
+
+  /* ── Filter bar ── */
+  #filter-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin: 0 28px 16px;
+    flex-wrap: wrap;
+  }
+  #filter-bar.show { display: flex; }
+  #filter-bar input, #filter-bar select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  #filter-bar input:focus, #filter-bar select:focus { border-color: var(--accent); }
+  #filter-bar input { flex: 1; min-width: 200px; }
+  #filter-bar select option { background: var(--surface2); }
+  #filter-bar .btn-clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: all .2s;
+  }
+  #filter-bar .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Table ── */
+  #table-wrapper {
+    margin: 0 28px 40px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: none;
+  }
+  #table-wrapper.show { display: block; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 2px solid var(--accent);
+    box-shadow: 0 2px 12px #39ff1433;
+  }
+  thead th {
+    padding: 12px 14px;
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color .2s;
+    text-shadow: 0 0 8px #39ff1466;
+  }
+  thead th:hover { color: var(--accent2); }
+  thead th .sort-icon { margin-left: 4px; opacity: .4; font-size: 10px; }
+  thead th.sorted-asc .sort-icon, thead th.sorted-desc .sort-icon { opacity: 1; color: var(--accent2); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td {
+    padding: 11px 14px;
+    color: var(--text);
+    vertical-align: top;
+    white-space: nowrap;
+  }
+  tbody td.multi {
+    white-space: normal;
+    max-width: 200px;
+    line-height: 1.5;
+  }
+  .tag {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    margin: 1px 2px 1px 0;
+    color: var(--accent2);
+  }
+  .count-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    margin-left: 5px;
+    box-shadow: 0 0 8px #39ff1488;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .center-cell { text-align: center; }
+  
+  .palet-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .palet-value {
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 35px;
+  }
+  .palet-dropdown {
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .palet-dropdown:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .palet-dropdown:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ── Pagination ── */
+  #pagination {
+    display: none;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: -20px 28px 40px;
+    padding-top: 14px;
+  }
+  #pagination.show { display: flex; }
+  .page-info { font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-right: 8px; }
+  .page-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    transition: all .2s;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .page-btn:disabled { opacity: .3; cursor: default; }
+  .page-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; box-shadow: 0 0 10px #39ff1466; }
+
+  /* ── Empty state ── */
+  #empty {
+    display: none;
+    text-align: center;
+    padding: 60px 28px;
+    color: var(--muted);
+  }
+  #empty.show { display: block; }
+  #empty .empty-icon { font-size: 42px; margin-bottom: 12px; }
+  #empty p { font-size: 14px; }
+
+  tfoot tr {
+    background: var(--surface2);
+    border-top: 2px solid var(--accent);
+    box-shadow: 0 -2px 12px #39ff1433;
+  }
+  tfoot td {
+    padding: 11px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-shadow: 0 0 8px #39ff1466;
+    white-space: nowrap;
+  }
+  tfoot td.sum-label {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    text-shadow: none;
+  }
+
+  /* ── CEP Tables Section ── */
+  #cep-section {
+    display: none;
+    margin: 0 28px 60px;
+  }
+  #cep-section.show { display: block; }
+
+  .cep-section-header {
+    border-top: 1px solid var(--border);
+    padding: 28px 0 20px;
+  }
+  .cep-section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    text-shadow: 0 0 8px #39ff1466;
+    letter-spacing: 1px;
+  }
+
+  #cep-tables-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .cep-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .cep-card-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--accent);
+    padding: 10px 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    box-shadow: 0 1px 8px #39ff1422;
+  }
+  .cep-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .cep-card-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    text-shadow: 0 0 8px #39ff1466;
+  }
+  .cep-meta-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cep-card-total {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .cep-card-total span {
+    color: var(--accent2);
+    font-weight: 600;
+  }
+
+  .cep-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .cep-mini-table thead tr {
+    background: transparent;
+    border-bottom: 1px solid var(--border);
+    box-shadow: none;
+  }
+  .cep-mini-table thead th {
+    padding: 8px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    text-shadow: none;
+    cursor: default;
+  }
+  .cep-mini-table thead th:last-child { text-align: right; }
+  .cep-mini-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .cep-mini-table tbody tr:last-child { border-bottom: none; }
+  .cep-mini-table tbody tr:hover { background: var(--surface2); }
+  .cep-mini-table tbody td {
+    padding: 8px 14px;
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .cep-mini-table tbody td:last-child {
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    color: var(--accent2);
+  }
+
+  .btn-tema {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    padding: 6px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-tema:hover { border-color: var(--accent); transform: rotate(20deg); }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-left: 24px;
+  }
+  .tab {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    padding: 7px 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all .2s;
+    text-transform: uppercase;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--accent); }
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 0 12px #39ff1455;
+  }
+
+  /* ── Indicadores Page ── */
+  #page-indicadores {
+    display: none;
+    padding: 24px 28px;
+  }
+  #page-indicadores.show { display: block; }
+
+  .ind-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 0;
+    color: var(--muted);
+  }
+  .ind-empty span { font-size: 48px; }
+  .ind-empty p { font-size: 14px; }
+  .ind-empty strong { color: var(--accent); }
+
+  .ind-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .ind-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .ind-card--wide { grid-column: span 2; }
+  .ind-card-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-shadow: 0 0 8px #39ff1433;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  .ind-chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .ind-card--wide .ind-chart-wrap { height: 320px; }
+  .ind-card:not(.ind-card--wide) .ind-chart-wrap { height: 380px; }
+
+  /* ── Paletização page ── */
+  #page-paletizacao {
+    display: none;
+    margin: 28px;
+  }
+  #page-paletizacao.show { display: block; }
+
+  .palet-search {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .palet-search input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 9px 14px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    width: 320px;
+    transition: border-color .2s;
+  }
+  .palet-search select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 9px 14px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .2s;
+    min-width: 150px;
+  }
+  .palet-search select option {
+    background: var(--surface);
+    color: var(--text);
+    padding: 6px;
+  }
+  .palet-search select option:checked {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .palet-search button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 16px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .palet-search button:hover { opacity: 0.85; }
+  .palet-search input:focus,
+  .palet-search select:focus { border-color: var(--accent); }
+
+  #palet-wrapper {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  #palet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  #palet-table thead tr {
+    background: var(--surface2);
+  }
+  #palet-table thead tr:first-child {
+    border-bottom: 1px solid var(--border);
+  }
+  #palet-table thead tr:last-child {
+    border-bottom: 2px solid var(--accent);
+    box-shadow: 0 2px 12px #39ff1433;
+  }
+  #palet-table thead tr:first-child th {
+    padding: 14px 16px;
+    text-align: center;
+    vertical-align: middle;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px #39ff1466;
+  }
+  /* Special styling for Material, Produto, Família when they span 2 rows */
+  #palet-table thead tr:first-child th[rowspan="2"] {
+    padding: 24px 16px;
+    line-height: 1.4;
+  }
+  #palet-table thead tr:last-child th {
+    padding: 10px 12px;
+    text-align: center;
+    vertical-align: middle;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: var(--surface1);
+  }
+  #palet-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  #palet-table tbody tr:last-child { border-bottom: none; }
+  #palet-table tbody tr:hover { background: var(--surface2); }
+  #palet-table tbody td { 
+    padding: 10px 16px; 
+    color: var(--text);
+    text-align: center;
+    vertical-align: middle;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  #palet-table tbody td:first-child {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+  }
+  .palet-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .btn-reset {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    padding: 4px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+    display: none;
+  }
+  .btn-reset:hover { border-color: var(--danger); color: var(--danger); }
+  #status-bar.done .btn-reset,
+  #status-bar.error .btn-reset { display: inline-block; }
+
+  .btn-romaneio-geral {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: #000;
+    padding: 7px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+    box-shadow: 0 0 10px #39ff1455;
+  }
+  .btn-romaneio-geral:hover {
+    box-shadow: 0 0 18px #39ff1488;
+    transform: translateY(-1px);
+  }
+
+  .btn-romaneio {
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--accent);
+    padding: 4px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .btn-romaneio:hover {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 10px #39ff1466;
+  }
+
+  /* ── Inspeção de Carregamento ── */
+  .ins-page {
+    width: 277mm;
+    padding: 10mm 12mm;
+    background: #fff;
+    margin: 0 auto 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.2);
+    font-family: Arial, sans-serif;
+    color: #000;
+  }
+  .ins-header { border: 2px solid #000; border-radius: 4px; margin-bottom: 8px; overflow: hidden; }
+  .ins-title-row {
+    background: #000; color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 10px; gap: 12px;
+  }
+  .ins-logo  { font-size: 14px; font-weight: 900; letter-spacing: 3px; color: #fff; white-space: nowrap; }
+  .ins-doca {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 16px;
+  }
+  .ins-doca-label { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  .ins-doca-circles { display: flex; gap: 3px; }
+  .ins-doca-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .ins-badge { font-size: 13px; font-weight: 900; letter-spacing: 2px; color: #39ff14; text-transform: uppercase; flex: 1; text-align: center; }
+  .ins-dt    { font-size: 18px; font-weight: 900; color: #fff; white-space: nowrap; }
+  .ins-grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .ins-divider { height: 1px; background: #ccc; margin: 0; }
+  .ins-field {
+    border-right: 1px solid #ccc; border-bottom: 1px solid #ccc;
+    padding: 3px 6px; display: flex; flex-direction: column;
+    flex: 1 1 auto;
+  }
+  .ins-field--xs { flex: 0 0 60px;  max-width: 60px; }
+  .ins-field--sm { flex: 0 0 100px; max-width: 100px; }
+  .ins-field--md { flex: 0 0 140px; max-width: 140px; }
+  .ins-field--lg { flex: 1 1 180px; min-width: 180px; }
+  .ins-field--xl { flex: 2 1 240px; min-width: 240px; }
+  .ins-field:last-child { border-right: none; }
+  .ins-label { font-size: 7px; font-weight: 700; text-transform: uppercase; color: #444; letter-spacing: .3px; }
+  .ins-value { font-size: 10px; font-weight: 600; color: #000; margin-top: 1px; }
+
+  /* Blocos de material */
+  .ins-blocks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .ins-block {
+    border: 2px solid #000;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 110px;
+    max-width: 160px;
+    background: #fff;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .ins-paletes {
+    font-size: 20px;
+    line-height: 1.5;
+    letter-spacing: 2px;
+    word-break: break-all;
+    text-align: center;
+  }
+  .ins-mat {
+    font-size: 13px;
+    font-weight: 900;
+    color: #000;
+    text-align: center;
+    border-top: 1px solid #ccc;
+    padding-top: 5px;
+    width: 100%;
+    letter-spacing: .5px;
+  }
+  .ins-familia {
+    font-size: 9px;
+    font-weight: 600;
+    color: #555;
+    text-align: center;
+    margin-top: 2px;
+  }
+  .ins-info {
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+  }
+
+  .ins-fracoes {
+    margin-top: 16px;
+    border: 2px dashed #000;
+    border-radius: 6px;
+    overflow: hidden;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .ins-fracoes-title {
+    background: #333;
+    color: #fff;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .ins-fracoes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .ins-fracao-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+  }
+  .ins-fracao-mat  { font-size: 13px; font-weight: 900; color: #000; }
+  .ins-fracao-qtde { font-size: 13px; font-weight: 600; color: #333; }
+
+  @media print {
+    .ins-page { box-shadow: none; margin: 0; width: 100%; }
+    .ins-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ins-title-row { background: #000 !important; }
+    .ins-logo, .ins-dt, .ins-doca-label { color: #fff !important; }
+    .ins-badge { color: #39ff14 !important; }
+    .ins-doca-circle {
+      background: #fff !important;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  /* ── Romaneio Modal ── */
+  #romaneio-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 9999;
+    overflow-y: auto;
+  }
+  #romaneio-modal.open { display: block; }
+
+  #romaneio-toolbar {
+    position: sticky;
+    top: 0;
+    background: #111;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10000;
+    border-bottom: 2px solid #39ff14;
+  }
+  #romaneio-toolbar span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: #39ff14;
+    flex: 1;
+  }
+  #romaneio-toolbar button {
+    background: transparent;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    padding: 6px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  #romaneio-toolbar button:first-of-type { border-color: #39ff14; color: #39ff14; }
+  #romaneio-toolbar button:first-of-type:hover { background: #39ff14; color: #000; }
+  #romaneio-toolbar button:last-of-type:hover { border-color: #f87171; color: #f87171; }
+
+  #romaneio-content {
+    padding: 20px;
+    background: #e0e0e0;
+  }
+
+  /* Romaneio pages */
+  .rom-page {
+    width: 277mm;
+    padding: 10mm 12mm;
+    background: #fff;
+    margin: 0 auto 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.2);
+    font-family: 'Red Hat Display', sans-serif;
+    font-size: 13px;
+    color: #000;
+  }
+  .rom-header { border: 1px solid #000; border-radius: 3px; margin-bottom: 5px; overflow: hidden; }
+  .rom-title-row {
+    background: #000; color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 2px 8px;
+  }
+  .rom-logo { font-size: 12px; font-weight: 900; letter-spacing: 2px; color: #fff; }
+  .rom-doca {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    margin-left: 15px;
+  }
+  .rom-doca-label { font-size: 9px; font-weight: 700; color: #fff; letter-spacing: .8px; }
+  .rom-doca-circles { display: flex; gap: 2px; }
+  .rom-doca-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    color: #000;
+    font-size: 8px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .rom-dt   { font-size: 15px; font-weight: 900; letter-spacing: 1.5px; color: #fff; }
+  .rom-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .rom-grid--smart {
+    display: flex;
+    flex-wrap: wrap;
+    grid-template-columns: none;
+  }
+  .rom-divider { height: 1px; background: #ccc; margin: 0; }
+  .rom-field {
+    border-right: 1px solid #ccc; border-bottom: 1px solid #ccc;
+    padding: 2px 4px; display: flex; flex-direction: column;
+    flex: 1 1 auto;
+  }
+  .rom-field--xs { flex: 0 0 60px;  max-width: 60px; }
+  .rom-field--sm { flex: 0 0 100px; max-width: 100px; }
+  .rom-field--md { flex: 0 0 140px; max-width: 140px; }
+  .rom-field--lg { flex: 1 1 180px; min-width: 180px; }
+  .rom-field--xl { flex: 2 1 240px; min-width: 240px; }
+  .rom-field:nth-child(4n) { border-right: 1px solid #ccc; }
+  .rom-field:last-child { border-right: none; }
+  .rom-field--wide { grid-column: span 2; }
+  .rom-label { font-size: 6px; font-weight: 700; text-transform: uppercase; color: #444; letter-spacing: .2px; }
+  .rom-value { font-size: 9px; font-weight: 600; color: #000; margin-top: 1px; }
+  .rom-value--highlight { font-size: 14px; font-weight: 900; }
+  .rom-page-num { text-align: right; font-size: 10px; color: #444; margin-bottom: 5px; font-family: Arial, sans-serif; }
+  .rom-table { width: 100%; border-collapse: collapse; font-size: 10px; font-family: 'Red Hat Display', sans-serif; }
+  .rom-table thead tr { background: #000; }
+  .rom-table thead th {
+    padding: 3px 4px; text-align: center; color: #fff;
+    font-size: 8px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .2px; border: 1px solid #000;
+  }
+  .rom-table thead th.col-mat  { width: 100px; text-align: center; }
+  .rom-table thead th.col-denom { width: 192px; max-width: 192px; }
+  .rom-table thead th.col-familia { width: 80px; text-align: center; }
+  .rom-table thead th.col-num   { width: 50px; text-align: center; }
+  .rom-table thead th.col-blank { width: 70px; }
+  .rom-table tbody tr:nth-child(even) { background: #f5f5f5; }
+  .rom-table tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rom-table tbody td { padding: 2px 3px; border: 1px solid #ccc; vertical-align: middle; color: #000; font-size: 9px; line-height: 1.2; }
+  .rom-table tbody td.col-mat   { text-align: center; font-weight: 900; font-size: 12px; color: #000; }
+  .rom-table tbody td.col-denom { font-size: 9px; width: 192px; max-width: 192px; white-space: normal; word-break: break-word; overflow: hidden; text-align: center; font-weight: 700; }
+  .rom-table tbody td.col-familia { text-align: center; font-size: 9px; font-weight: 600; color: #000; width: 80px; }
+  .rom-center { text-align: center; font-weight: 900; color: #000; font-size: 12px; }
+  .rom-blank  { min-width: 70px; }
+  .rom-obs {
+    margin-top: 14px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rom-obs-inner {
+    display: flex;
+    flex: 1;
+  }
+  .rom-obs-title {
+    background: #000; color: #fff;
+    padding: 5px 10px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .rom-obs-body {
+    flex: 1;
+    min-height: 40px;
+    padding: 5px 8px;
+    font-size: 11px;
+    color: #000;
+    border-right: 1px solid #000;
+  }
+  .rom-separador {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border-right: 1px solid #000;
+  }
+  .rom-separador-title {
+    background: #000;
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .rom-separador-body {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+  .rom-separador-line {
+    width: 100%;
+    border-bottom: 1px dashed #000;
+    padding-top: 20px;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .rom-stamp {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 200px;
+    min-height: 70px;
+    flex-shrink: 0;
+  }
+  .rom-stamp-title {
+    background: #000; color: #fff;
+    width: 100%;
+    text-align: center;
+    padding: 5px 6px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .rom-stamp-box {
+    flex: 1;
+    width: 100%;
+    min-height: 70px;
+  }
+  .rom-entrega {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 200px;
+    min-height: 70px;
+    flex-shrink: 0;
+    border-right: 1px solid #000;
+  }
+  .rom-entrega-title {
+    background: #000; color: #fff;
+    width: 100%;
+    text-align: center;
+    padding: 5px 6px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .rom-entrega-box {
+    flex: 1;
+    width: 100%;
+    min-height: 70px;
+  }
+
+  @media print {
+    @page { size: A4 landscape; margin: 10mm; }
+    body.printing-romaneio > *:not(#romaneio-modal),
+    body.printing-inspecao > *:not(#romaneio-modal) { display: none !important; }
+    #romaneio-modal {
+      position: static !important;
+      overflow: visible !important;
+      background: #fff !important;
+      display: block !important;
+    }
+    #romaneio-toolbar { display: none !important; }
+    #romaneio-content { padding: 0 !important; background: #fff !important; }
+    .rom-page {
+      box-shadow: none !important;
+      margin: 0 !important;
+      width: 100% !important;
+      page-break-after: always;
+    }
+    .rom-page:last-child { page-break-after: avoid; }
+    
+    /* Prevent orphans and widows */
+    .rom-table tbody tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    .rom-table { orphans: 3; widows: 3; }
+    
+    .rom-table thead tr,
+    .rom-title-row,
+    .rom-obs-title,
+    .rom-entrega-title,
+    .rom-stamp-title { background: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .rom-table thead th,
+    .rom-logo, .rom-dt,
+    .rom-doca-label,
+    .rom-obs-title,
+    .rom-entrega-title,
+    .rom-stamp-title { color: #fff !important; }
+    .rom-doca-circle {
+      background: #fff !important;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  .btn-export {
+    background: transparent;
+    border: 1px solid #00e5ff;
+    border-radius: var(--radius);
+    color: #00e5ff;
+    padding: 7px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .btn-export:hover { background: #00e5ff; color: #000; box-shadow: 0 0 18px #00e5ff66; }
+
+  /* ── KPI Cards ── */
+  .ind-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .ind-kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ind-kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .ind-kpi--mat::before  { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .ind-kpi--cep::before  { background: #00e5ff;       box-shadow: 0 0 8px #00e5ff; }
+  .ind-kpi--tot::before  { background: #ff6ec7;       box-shadow: 0 0 8px #ff6ec7; }
+  .ind-kpi-label  { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+  .ind-kpi-value  { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; color: var(--accent); }
+  .ind-kpi--cep .ind-kpi-value  { color: #00e5ff; }
+  .ind-kpi--tot .ind-kpi-value  { color: #ff6ec7; }
+  .ind-kpi-sub    { font-size: 11px; color: var(--muted); }
+
+  /* ── CEP card fade+slide animation ── */
+  @keyframes cepCardIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cep-card {
+    animation: cepCardIn .35s ease both;
+  }
+
+  .btn-inspecao-geral {
+    background: transparent;
+    border: 1px solid #ff6ec7;
+    border-radius: var(--radius);
+    color: #ff6ec7;
+    padding: 7px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .btn-inspecao-geral:hover { background: #ff6ec7; color: #000; box-shadow: 0 0 18px #ff6ec766; }
+
+  .btn-inspecao {
+    background: transparent;
+    border: 1px solid #ff6ec7;
+    border-radius: var(--radius);
+    color: #ff6ec7;
+    padding: 4px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .btn-inspecao:hover { background: #ff6ec7; color: #000; box-shadow: 0 0 10px #ff6ec766; }
+
+  /* ── Cursor Neon ── */
+  * { cursor: none !important; }
+  select, select * { cursor: default !important; }
+  #cursor-arrow {
+    position: fixed;
+    pointer-events: none;
+    z-index: 99999;
+    top: 0; left: 0;
+    width: 48px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transition: filter .2s;
+  }
+  #cursor-arrow img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  #cursor-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99997;
+  }
+  body.light-theme #cursor-arrow {
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 18px 28px;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .5px;
+  }
+  footer span {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ── Página Simulador de Cortes ── */
+  #page-simulador {
+    display: none; height: calc(100vh - 65px); background: #0a0f1e; color: #e2e8f0; font-family: Segoe UI, Arial, sans-serif;
+  }
+  #page-simulador.show { display: flex; }
+  .sim-main { display: flex; flex: 1; overflow: hidden; width: 100%; }
+  .sim-side { width: 370px; background: #111827; border-right: 1px solid #1f2d4a; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+  .sim-tabs { display: flex; border-bottom: 1px solid #1f2d4a; }
+  .sim-tab { flex: 1; padding: 9px 4px; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; font-family: Consolas, monospace; transition: all .2s; }
+  .sim-tab.on { color: #00C85A; border-bottom-color: #00C85A; background: rgba(0,200,90,0.05); }
+  .sim-pane { display: none; flex: 1; overflow-y: auto; padding: 14px; flex-direction: column; gap: 10px; }
+  .sim-pane.on { display: flex; }
+  .sim-lbl { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #64748b; margin-bottom: 3px; font-family: Consolas, monospace; }
+  .sim-g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .sim-ig { display: flex; flex-direction: column; gap: 3px; }
+  .sim-ig span { font-size: 9px; color: #64748b; font-family: Consolas, monospace; }
+  #page-simulador input[type=number], #page-simulador input[type=text] { background: #0d1526; border: 1px solid #1f2d4a; color: #e2e8f0; padding: 6px 8px; border-radius: 4px; font-size: 12px; font-family: Consolas, monospace; width: 100%; }
+  #page-simulador input:focus { outline: none; border-color: #1932C8; }
+  .sim-card { background: #0d1526; border: 1px solid #1f2d4a; border-radius: 6px; padding: 12px; }
+  .sim-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #1f2d4a; font-size: 11px; }
+  .sim-row:last-child { border-bottom: none; }
+  .sim-row .k { color: #64748b; }
+  .sim-row .v { font-family: Consolas, monospace; font-weight: 700; }
+  .sim-ok { color: #00C85A; } .sim-warn { color: #f97316; } .sim-err { color: #ef4444; }
+  .sim-bar { margin-top: 8px; background: #1a2540; border-radius: 4px; height: 8px; overflow: hidden; }
+  .sim-barfill { height: 100%; border-radius: 4px; transition: width .5s; }
+  .sim-btnvd { padding: 9px 16px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: Consolas, monospace; width: 100%; background: #00C85A; color: #000; }
+  .sim-up { border: 2px dashed #1f2d4a; border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; background: #0d1526; display: block; }
+  .sim-up:hover { border-color: #1932C8; }
+  .sim-up input { display: none; }
+  .sim-dtlist { display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto; }
+  .sim-dti { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d1526; border: 1px solid #1f2d4a; border-radius: 4px; cursor: pointer; }
+  .sim-dti:hover { border-color: #1932C8; }
+  .sim-dti.on { border-color: #00C85A; background: rgba(0,200,90,0.07); }
+  .sim-dti input { accent-color: #00C85A; width: 15px; height: 15px; cursor: pointer; }
+  .sim-dtn { font-family: Consolas, monospace; font-size: 12px; font-weight: 700; color: #1932C8; }
+  .sim-dti2 { font-size: 10px; color: #64748b; }
+  .sim-sbtn { margin-left: auto; background: #00C85A; color: #000; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 3px 9px; cursor: pointer; font-family: Consolas, monospace; opacity: 0; transition: opacity .2s; white-space: nowrap; }
+  .sim-dti.on .sim-sbtn { opacity: 1; }
+  .sim-oi { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #1f2d4a; }
+  .sim-on2 { width: 20px; height: 20px; min-width: 20px; border-radius: 50%; background: #1932C8; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; font-family: Consolas, monospace; }
+  .sim-tagph { background: #7c3a00; color: #fb923c; font-size: 9px; padding: 1px 5px; border-radius: 3px; font-family: Consolas, monospace; margin-left: 4px; }
+  .sim-cv { flex: 1; position: relative; overflow: hidden; background: #050a14; }
+  #page-simulador canvas { position: absolute; top: 0; left: 0; }
+  .sim-ctrls { position: absolute; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .sim-cbtn { background: rgba(25,50,200,0.8); border: 1px solid #1932C8; color: #fff; width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; user-select: none; }
+  .sim-cbtn:hover { background: #1932C8; }
+  .sim-hint3d { position: absolute; bottom: 16px; left: 16px; font-size: 10px; color: rgba(255,255,255,0.3); font-family: Consolas, monospace; line-height: 1.8; }
+  .sim-leg3d { position: absolute; top: 16px; right: 16px; background: rgba(10,15,30,0.92); border: 1px solid #1f2d4a; border-radius: 6px; padding: 10px; max-width: 220px; max-height: 55vh; overflow-y: auto; }
+  .sim-legtit { font-family: Consolas, monospace; font-size: 9px; letter-spacing: 2px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
+  .sim-legitem { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+  .sim-emp { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: #64748b; font-family: Consolas, monospace; font-size: 12px; text-align: center; }
+
+  /* ── TEMA CLARO: Simulador de Cortes ── */
+  body.light-theme #page-simulador { background: #f4f6f4; color: #1a2e1a; }
+  body.light-theme .sim-side { background: #ffffff; border-right: 1px solid #c8d8c8; }
+  body.light-theme .sim-tabs { border-bottom: 1px solid #c8d8c8; }
+  body.light-theme .sim-tab { color: #5a7a5a; }
+  body.light-theme .sim-tab.on { color: #0a7a00; border-bottom-color: #0a7a00; background: rgba(10,122,0,0.05); }
+  body.light-theme .sim-lbl { color: #5a7a5a; }
+  body.light-theme #page-simulador input[type=number], 
+  body.light-theme #page-simulador input[type=text] { background: #ffffff; border: 1px solid #c8d8c8; color: #1a2e1a; }
+  body.light-theme #page-simulador input:focus { border-color: #0a7a00; }
+  body.light-theme .sim-card { background: #ffffff; border: 1px solid #c8d8c8; }
+  body.light-theme .sim-row { border-bottom: 1px solid #eef2ee; }
+  body.light-theme .sim-row .k { color: #5a7a5a; }
+  body.light-theme .sim-bar { background: #eef2ee; }
+  body.light-theme .sim-up { border: 2px dashed #c8d8c8; background: #ffffff; }
+  body.light-theme .sim-up:hover { border-color: #0a7a00; }
+  body.light-theme .sim-dti { background: #ffffff; border: 1px solid #c8d8c8; }
+  body.light-theme .sim-dti:hover { border-color: #0a7a00; }
+  body.light-theme .sim-dtn { color: #0a7a00; }
+  body.light-theme .sim-dti2 { color: #5a7a5a; }
+  body.light-theme .sim-cv { background: #eef2ee; }
+  body.light-theme .sim-oi { border-bottom: 1px solid #eef2ee; }
+  body.light-theme .sim-leg3d { background: rgba(255,255,255,0.92); border: 1px solid #c8d8c8; color: #1a2e1a; }
+  body.light-theme .sim-legtit { color: #5a7a5a; }
+  body.light-theme .sim-hint3d { color: rgba(0,0,0,0.5); }
+  body.light-theme .sim-emp { color: #5a7a5a; }
+  body.light-theme #vT::placeholder { color: #a0a0a0; }
+</style>
+</head>
+<body>
+<canvas id="cursor-canvas"></canvas>
+<div id="cursor-arrow">
+  <img src="cursor-bear.png" alt="cursor">
+</div>
+
+<header>
+  <div class="logo">ROMANI<span>X</span></div>
+  <nav class="tabs">
+    <button class="tab active" id="tab-embarques">Embarques</button>
+    <button class="tab" id="tab-indicadores">Indicadores</button>
+    <button class="tab" id="tab-paletizacao">Paletização</button>
+    <button class="tab" id="tab-simulador">Simulador de Cortes</button>
+  </nav>
+  <div class="subtitle">// Dashboard de Embarques</div>
+  <button id="btn-tema" class="btn-tema" title="Alternar tema">🌙</button>
+</header>
+
+<!-- Upload -->
+<div class="upload-zone" id="upload-zone">
+  <input type="file" id="file-input" accept=".csv,.xlsx,.xls" />
+  <span class="upload-icon">📦</span>
+  <h3>Arraste ou clique para importar sua tabela</h3>
+  <p>Selecione o arquivo com os dados de embarque</p>
+  <div class="file-types">
+    <span class="badge">.CSV</span>
+    <span class="badge">.XLSX</span>
+    <span class="badge">.XLS</span>
+  </div>
+</div>
+
+<!-- Status -->
+<div id="status-bar"><div class="dot"></div><span id="status-text">Processando...</span><button class="btn-reset" id="btn-reset">↺ Trocar arquivo</button></div>
+
+<!-- Summary cards -->
+<div id="summary">
+  <div class="card"><div class="card-label">Embarques</div><div class="card-value" id="card-total">0</div></div>
+  <div class="card"><div class="card-label">N° de Transporte</div><div class="card-value" id="card-dt">—</div></div>
+  <div class="card"><div class="card-label">Remessas únicas</div><div class="card-value" id="card-remessas">0</div></div>
+  <div class="card"><div class="card-label">Materiais únicos</div><div class="card-value" id="card-materiais">0</div></div>
+  <div class="card"><div class="card-label">CEPs únicos</div><div class="card-value" id="card-ceps">0</div></div>
+  <div class="card"><div class="card-label">Peso total (t)</div><div class="card-value" id="card-cubagem">0</div></div>
+  <div class="card"><div class="card-label">Total fardos/cx</div><div class="card-value" id="card-pedidos">0</div></div>
+</div>
+
+<!-- Filter bar -->
+<div id="filter-bar">
+  <input type="text" id="search-input" placeholder="🔍  Buscar por qualquer campo..." />
+  <select id="remessa-filter"><option value="">Todas as Remessas</option></select>
+  <select id="cep-filter"><option value="">Todos os CEPs</option></select>
+  <select id="material-filter"><option value="">Todos os Materiais</option></select>
+  <button class="btn-clear" onclick="clearFilters()">✕ Limpar filtros</button>
+  <button class="btn-export" id="btn-export">📥 Exportar Excel</button>
+  <button class="btn-romaneio-geral" id="btn-romaneio-geral">📋 Romaneio Geral</button>
+  <button class="btn-inspecao-geral" id="btn-inspecao-geral">🔍 Inspeção Geral</button>
+</div>
+
+<!-- Table -->
+<div id="table-wrapper">
+  <table id="main-table">
+    <thead>
+      <tr id="thead-row"></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+    <tfoot id="tfoot"></tfoot>
+  </table>
+</div>
+
+<!-- Empty -->
+<div id="empty">
+  <div class="empty-icon">🔍</div>
+  <p>Nenhum resultado encontrado para os filtros aplicados.</p>
+</div>
+
+<!-- Pagination -->
+<div id="pagination">
+  <span class="page-info" id="page-info"></span>
+  <button class="page-btn" id="btn-prev" onclick="changePage(-1)">← Anterior</button>
+  <div id="page-numbers"></div>
+  <button class="page-btn" id="btn-next" onclick="changePage(1)">Próxima →</button>
+</div>
+
+<!-- CEP Tables Section -->
+<div id="cep-section">
+  <div class="cep-section-header">
+    <span class="cep-section-title">// Materiais por Código Postal</span>
+  </div>
+  <div id="cep-tables-container"></div>
+</div>
+
+<!-- Indicadores Page -->
+<div id="page-indicadores">
+  <div class="ind-empty" id="ind-empty">
+    <span>📊</span>
+    <p>Carregue um arquivo na aba <strong>Embarques</strong> para ver os indicadores.</p>
+  </div>
+  <div id="ind-content" style="display:none">
+    <div class="ind-kpi-row" id="ind-kpi-row"></div>
+    <div class="ind-grid">
+      <div class="ind-card ind-card--wide">
+        <div class="ind-card-title">📦 Top Materiais por Quantidade</div>
+        <div class="ind-chart-wrap"><canvas id="chart-materiais"></canvas></div>
+      </div>
+      <div class="ind-card">
+        <div class="ind-card-title">📍 Quantidade por CEP</div>
+        <div class="ind-chart-wrap"><canvas id="chart-cep"></canvas></div>
+      </div>
+      <div class="ind-card">
+        <div class="ind-card-title">📊 Paletes Fechados vs Frações por Material</div>
+        <div class="ind-chart-wrap"><canvas id="chart-paletes"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Paletização Page -->
+<div id="page-paletizacao">
+  <div class="palet-search">
+    <input type="text" id="palet-search" placeholder="🔍  Buscar material ou produto..." />
+    <select id="palet-centro-filter" multiple size="1">
+      <!-- Será populado automaticamente ao carregar PLT.xlsm -->
+    </select>
+    <button id="btn-export-palet">📥 Exportar Excel</button>
+  </div>
+  <div class="palet-count" id="palet-count"></div>
+  <div id="palet-wrapper">
+    <table id="palet-table">
+      <thead><tr><th>Material</th><th>Produto</th><th>Família</th></tr></thead>
+      <tbody id="palet-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Simulador de Cortes Page -->
+<div id="page-simulador">
+  <div class="sim-main">
+    <div class="sim-side">
+      <div class="sim-tabs">
+        <div class="sim-tab on" onclick="simTrocarAba('veic')">Veículo</div>
+        <div class="sim-tab" onclick="simTrocarAba('dt')">Base DT</div>
+        <div class="sim-tab" onclick="simTrocarAba('res')">Resultado</div>
+      </div>
+      <div class="sim-pane on" id="pane-veic">
+        <div class="sim-lbl">Buscar Veículo no SAP</div>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <input type="text" id="vPlaca" placeholder="Placa (Ex: ABC1234)" style="text-transform: uppercase;">
+          <button type="button" class="sim-btnvd" onclick="buscarPlaca(event)" style="width: auto; white-space: nowrap;">🔍 BUSCAR</button>
+        </div>
+
+        <div class="sim-lbl">Dimensões internas do baú (metros)</div>
+        <div class="sim-g3">
+          <div class="sim-ig"><span>Comprimento</span><input type="number" id="vC" value="7.5" step="0.1" min="1" oninput="updV()"></div>
+          <div class="sim-ig"><span>Largura</span><input type="number" id="vL" value="2.4" step="0.1" min="0.5" oninput="updV()"></div>
+          <div class="sim-ig"><span>Altura</span><input type="number" id="vA" value="2.5" step="0.1" min="0.5" oninput="updV()"></div>
+        </div>
+        <div class="sim-card">
+          <div class="sim-row"><span class="k">Volume do baú</span><span class="v" id="vvol">45.00 m3</span></div>
+          <div class="sim-row"><span class="k">Tipo</span><input type="text" id="vT" placeholder="Truck, Carreta..." style="width:150px;padding:2px 6px;font-size:11px;border:none;background:transparent;color:var(--sim-tx)"></div>
+        </div>
+        <button class="sim-btnvd" onclick="simular()">► SIMULAR CARGA</button>
+        <div style="font-size:9px;color:#64748b;text-align:center;font-family:Consolas,monospace">Selecione a DT na aba Base DT antes de simular</div>
+      </div>
+      <div class="sim-pane" id="pane-dt">
+        <div class="sim-lbl">Upload da Base DT (ZLES002)</div>
+        <label class="sim-up" for="fi">
+          <input type="file" id="fi" accept=".xlsx,.xls,.csv" onchange="simLoadFile(this)">
+          <div style="font-size:28px;margin-bottom:6px">📁</div>
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px">Clique para carregar</div>
+          <div style="font-size:10px;color:#64748b">Aceita .xlsx ou .csv da ZLES002<br>Colunas: Nr transporte - Material - Volume acumulado - Qtde Remessa</div>
+        </label>
+        <div id="st" style="font-size:10px;color:#64748b;text-align:center;font-family:Consolas,monospace;min-height:16px"></div>
+        <div id="dtw" style="display:none;flex-direction:column;gap:8px">
+          <div class="sim-lbl">Selecionar DT</div>
+          <input type="text" id="dtf" placeholder="Filtrar por número..." oninput="filtrarDT(this.value)">
+          <div class="sim-dtlist" id="dtl"></div>
+          <div id="dtsi" style="font-size:10px;color:#00C85A;font-family:Consolas,monospace;min-height:14px"></div>
+        </div>
+      </div>
+      <div class="sim-pane" id="pane-res">
+        <div class="sim-lbl">Resumo da Carga</div>
+        <div class="sim-card" id="rc"><div class="sim-emp" style="height:80px"><div>Rode a simulação primeiro</div></div></div>
+        <div class="sim-lbl" style="margin-top:4px">Ordem de Carregamento</div>
+        <div id="ol"><div style="font-size:10px;color:#64748b;padding:6px">Aguardando...</div></div>
+      </div>
+    </div>
+    <div class="sim-cv" id="cvwrap">
+      <div class="sim-emp" id="ecv" style="height:100%">
+        <div style="font-size:48px;opacity:.3">🚛</div>
+        <div>1. Configure o veículo<br>2. Suba a ZLES002 e selecione a DT<br>3. Clique em Simular</div>
+      </div>
+      <canvas id="c3d" style="display:none"></canvas>
+      <div class="sim-leg3d" id="leg3d" style="display:none"><div class="sim-legtit">Legenda SKUs</div><div id="lgi"></div></div>
+      <div class="sim-hint3d" id="hnt3d" style="display:none">Arrastar: rotacionar | Scroll: zoom | Direito: mover</div>
+      <div class="sim-ctrls" id="ctr3d" style="display:none">
+        <div class="sim-cbtn" onclick="camReset()">↻</div>
+        <div class="sim-cbtn" onclick="camLateral()">▯</div>
+        <div class="sim-cbtn" onclick="camTopo()">▭</div>
+        <div class="sim-cbtn" onclick="camFrontal()">▫</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Romaneio Modal -->
+<div id="romaneio-modal">
+  <div id="romaneio-toolbar" class="no-print">
+    <span id="romaneio-title"></span>
+    <button id="btn-imprimir-romaneio">🖨 Imprimir / Salvar PDF</button>
+    <button id="btn-fechar-romaneio">✕ Fechar</button>
+  </div>
+  <div id="romaneio-content"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// COLUMN MAPPING — exact header names in the file
+// ════════════════════════════════════════════════
+const COL = {
+  centro:          'Centro',
+  shipmentId:      'Shipment ID',
+  remessa:         'Nr. Remessa/Recebimento',
+  agendamento:     'Data Agendamento',
+  nrTransporte:    'Nº transporte',
+  pesoLiquido:     'Peso líquido',
+  volumeAcumulado: 'Volume acumulado',
+  qtdeRemessa:     'Qtde Remessa',
+  nomeCliente:     'Nome Cliente/Fornecedor',
+  nomeMotorista:   'Nome Motorista',
+  placaSimples:    'Placa Simples Veículo',
+  placaComposicao: 'Placa Composição',
+  nomeTransportadora: 'Nome Transportadora',
+  material:        'Material',
+  denominacao:     'Denominação de item',
+  local:           'Local',
+  cep:             'Código postal',
+};
+
+// ════════════════════════════════════════════════
+// DISPLAY COLUMNS CONFIG
+// ════════════════════════════════════════════════
+const DISPLAY_COLS = [
+  { key: 'centro',             label: 'Centro' },
+  { key: 'shipmentId',         label: 'Shipment' },
+  { key: 'remessa',            label: 'Remessa' },
+  { key: 'agendamento',        label: 'Agendamento' },
+  { key: 'nrTransporte',       label: 'DT' },
+  { key: 'material',           label: 'Material' },
+  { key: 'denominacao',        label: 'Denominação' },
+  { key: 'paletizacao',        label: 'Paletização' },
+  { key: 'pesoLiquido',        label: 'Peso (t)' },
+  { key: 'volumeAcumulado',    label: 'Cubagem da DT' },
+  { key: 'qtdeRemessa',        label: 'Pedido Fardos/Caixas' },
+  { key: 'nomeCliente',        label: 'Cliente' },
+  { key: 'nomeMotorista',      label: 'Motorista' },
+  { key: 'placaSimples',       label: 'Placa Cavalo' },
+  { key: 'placaComposicao',    label: 'Placa Composição' },
+  { key: 'nomeTransportadora', label: 'Transportadora' },
+  { key: 'cep',                label: 'CEP' },
+];
+
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+let allGroups = [];
+let paletPrefs = {}; // Armazena preferências de paletização: {material: 'A'|'B'|'C'}
+let filtered  = [];
+let rawDataRows = [];
+let globalIdx   = {};     // column index map, set during buildDashboard
+let sortCol   = null;
+let sortDir   = 1;
+let page      = 1;
+const PAGE_SIZE = 50;
+
+function getVal(row, key) {
+  const i = globalIdx[key];
+  return (i >= 0 && row[i] !== undefined && row[i] !== null) ? String(row[i]).trim() : '';
+}
+
+// ════════════════════════════════════════════════
+// FILE UPLOAD
+// ════════════════════════════════════════════════
+const uploadZone = document.getElementById('upload-zone');
+const fileInput  = document.getElementById('file-input');
+
+document.getElementById('btn-imprimir-romaneio').addEventListener('click', () => {
+  const isInspecao = !!document.querySelector('.ins-page');
+  const cls = isInspecao ? 'printing-inspecao' : 'printing-romaneio';
+  document.body.classList.add(cls);
+  window.print();
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove(cls);
+  }, { once: true });
+});
+
+document.getElementById('btn-fechar-romaneio').addEventListener('click', () => {
+  document.getElementById('romaneio-modal').classList.remove('open');
+});
+
+document.getElementById('btn-tema').addEventListener('click', () => {
+  const isLight = document.body.classList.toggle('light-theme');
+  document.getElementById('btn-tema').textContent = isLight ? '☀️' : '🌙';
+  if (document.getElementById('page-indicadores').classList.contains('show')) {
+    renderIndicadores();
+  }
+  
+  if (document.getElementById('page-simulador').classList.contains('show') && typeof draw3d === 'function' && BXS.length) {
+    draw3d();
+  }
+});
+
+document.getElementById('btn-export').addEventListener('click', exportarExcel);
+document.getElementById('btn-romaneio-geral').addEventListener('click', gerarRomaneioGeral);
+document.getElementById('btn-inspecao-geral').addEventListener('click', gerarInspecaoGeral);
+document.getElementById('tab-embarques').addEventListener('click', () => switchTab('embarques'));
+document.getElementById('tab-simulador').addEventListener('click', () => switchTab('simulador'));
+document.getElementById('tab-indicadores').addEventListener('click', () => switchTab('indicadores'));
+document.getElementById('tab-paletizacao').addEventListener('click', () => switchTab('paletizacao'));
+document.getElementById('palet-search').addEventListener('input', filterPalet);
+document.getElementById('palet-centro-filter').addEventListener('change', filterPalet);
+document.getElementById('btn-export-palet').addEventListener('click', exportarPaletExcel);
+document.getElementById('btn-reset').addEventListener('click', resetDashboard);
+
+// Inicializa dropdown de centros com os centros disponíveis em PALET_DATA
+(function initPaletizacao() {
+  const allCentros = new Set();
+  PALET_DATA.forEach(([,,,centros]) => {
+    Object.keys(centros).forEach(c => allCentros.add(c));
+  });
+  const centrosCodes = Array.from(allCentros).sort();
+  updateCentroFilter(centrosCodes);
+  console.log(`✅ Paletização carregada: ${PALET_DATA.length} produtos, ${centrosCodes.length} centros`);
+})();
+
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) processFile(e.target.files[0]);
+});
+
+function setStatus(msg, state='loading') {
+  const bar = document.getElementById('status-bar');
+  bar.className = 'show ' + state;
+  document.getElementById('status-text').textContent = msg;
+}
+
+async function processFile(file) {
+  setStatus('Lendo arquivo: ' + file.name);
+  const ext = file.name.split('.').pop().toLowerCase();
+  try {
+    let rows;
+    if (ext === 'csv') {
+      const text = await file.text();
+      rows = parseCSV(text);
+    } else {
+      rows = await parseXLSX(file);
+    }
+    if (!rows || rows.length < 2) throw new Error('Arquivo sem dados suficientes.');
+    buildDashboard(rows);
+    setStatus(`✓  ${file.name} carregado com sucesso — ${rows.length - 1} linhas processadas`, 'done');
+  } catch(err) {
+    setStatus('Erro: ' + err.message, 'error');
+  }
+}
+
+// ── CSV parser ──
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  // detect separator
+  const sep = text.includes(';') && !text.includes(',') ? ';' : ',';
+  return lines.map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === sep && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+// ── XLSX parser ──
+function parseXLSX(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: false });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+        res(data);
+      } catch(err) { rej(err); }
+    };
+    reader.onerror = () => rej(new Error('Falha ao ler o arquivo.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ════════════════════════════════════════════════
+// BUILD DASHBOARD
+// ════════════════════════════════════════════════
+function buildDashboard(rows) {
+  const headers = rows[0].map(h => String(h).trim());
+
+  // Map column names to indices (global)
+  globalIdx = {};
+  Object.entries(COL).forEach(([key, name]) => {
+    const i = headers.findIndex(h => h.toLowerCase() === name.toLowerCase());
+    globalIdx[key] = i;
+  });
+
+  // Parse all data rows — no grouping, one object per raw row
+  const dataRows = rows.slice(1, -1).filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+
+  // Create paletMap for quick lookup
+  const paletMap = new Map();
+  PALET_DATA.forEach(([mat, prod, familia, centros]) => {
+    const s = String(mat).trim();
+    const n = String(parseInt(s, 10));
+    paletMap.set(s, centros);
+    paletMap.set(n, centros);
+  });
+
+  function getPaletizacao(material, centro) {
+    const matStr = String(material || '').trim().replace(/\.0+$/, '');
+    const matNum = String(parseInt(matStr, 10));
+    const centroStr = String(centro || '').trim();
+    const centros = paletMap.get(matStr) || paletMap.get(matNum);
+    if (!centros) return '-';
+    const centroData = centros[centroStr] || centros[String(parseInt(centroStr, 10))];
+    if (!centroData) return '-';
+    
+    // Get preference (A, B, or C) for this material
+    const pref = paletPrefs[matStr] || paletPrefs[matNum] || 'A';
+    const pal = centroData[pref] || 0;
+    return pal > 0 ? pal : '-';
+  }
+
+  function getPaletizacaoDetailed(material, centro) {
+    const matStr = String(material || '').trim().replace(/\.0+$/, '');
+    const matNum = String(parseInt(matStr, 10));
+    const centroStr = String(centro || '').trim();
+    const centros = paletMap.get(matStr) || paletMap.get(matNum);
+    if (!centros) return { value: '-', options: null, pref: 'A', material: matStr };
+    const centroData = centros[centroStr] || centros[String(parseInt(centroStr, 10))];
+    if (!centroData) return { value: '-', options: null, pref: 'A', material: matStr };
+    
+    // Get preference (A, B, or C) for this material
+    const pref = paletPrefs[matStr] || paletPrefs[matNum] || 'A';
+    const pal = centroData[pref] || 0;
+    return { 
+      value: pal > 0 ? pal : '-', 
+      options: centroData, 
+      pref: pref,
+      material: matStr
+    };
+  }
+
+  allGroups = dataRows.map(row => ({
+    centro:             getVal(row, 'centro'),
+    shipmentId:         getVal(row, 'shipmentId'),
+    remessa:            getVal(row, 'remessa'),
+    agendamento:        formatDate(getVal(row, 'agendamento')),
+    nrTransporte:       getVal(row, 'nrTransporte'),
+    material:           getVal(row, 'material'),
+    denominacao:        getVal(row, 'denominacao'),
+    paletizacao:        getPaletizacao(getVal(row, 'material'), getVal(row, 'centro')),
+    paletizacaoDetail:  getPaletizacaoDetailed(getVal(row, 'material'), getVal(row, 'centro')),
+    pesoLiquido:        parseFloat(String(getVal(row, 'pesoLiquido')).replace(',', '.')) / 1000 || 0,
+    volumeAcumulado:    parseFloat(String(getVal(row, 'volumeAcumulado')).replace(',', '.')) || 0,
+    qtdeRemessa:        Number(String(getVal(row, 'qtdeRemessa')).replace(',', '.')) || 0,
+    nomeCliente:        getVal(row, 'nomeCliente'),
+    nomeMotorista:      getVal(row, 'nomeMotorista'),
+    placaSimples:       getVal(row, 'placaSimples'),
+    placaComposicao:    getVal(row, 'placaComposicao'),
+    nomeTransportadora: getVal(row, 'nomeTransportadora'),
+    cep:                getVal(row, 'cep'),
+  }));
+
+  rawDataRows = dataRows;
+
+  filtered = [...allGroups];
+  page = 1;
+  buildFilters();
+  buildTableHeader();
+  renderSummary();
+  renderTable();
+  renderCepTables();
+
+  document.getElementById('summary').classList.add('show');
+  document.getElementById('filter-bar').classList.add('show');
+  document.getElementById('table-wrapper').classList.add('show');
+  document.getElementById('pagination').classList.add('show');
+  document.getElementById('cep-section').classList.add('show');
+  document.getElementById('upload-zone').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════
+// DATE FORMATTING
+// ════════════════════════════════════════════════
+function formatDate(val) {
+  if (!val) return '';
+  // Excel serial number (número inteiro ou decimal)
+  const n = Number(val);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const date = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+    const d = String(date.getUTCDate()).padStart(2, '0');
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const y = date.getUTCFullYear();
+    return `${d}/${m}/${y}`;
+  }
+  // yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}/.test(String(val))) {
+    const [y, m, d] = String(val).split(/[-T]/);
+    return `${d}/${m}/${y}`;
+  }
+  // MM/DD/YYYY string — inverte para DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(String(val))) {
+    const [a, b, y] = String(val).split('/');
+    const year = y.length === 2 ? '20' + y : y;
+    return `${b.padStart(2,'0')}/${a.padStart(2,'0')}/${year}`;
+  }
+  return String(val);
+}
+
+// ════════════════════════════════════════════════
+// FILTERS
+// ════════════════════════════════════════════════
+function buildFilters() {
+  const remessas  = [...new Set(allGroups.map(g => g.remessa).filter(Boolean))].sort();
+  const ceps      = [...new Set(allGroups.map(g => g.cep).filter(Boolean))].sort();
+  const materiais = [...new Set(allGroups.map(g => String(parseInt(g.material, 10) || g.material).trim()).filter(Boolean))].sort();
+
+  const remessaSel  = document.getElementById('remessa-filter');
+  remessaSel.innerHTML = '<option value="">Todas as Remessas</option>';
+  remessas.forEach(r => remessaSel.innerHTML += `<option>${r}</option>`);
+
+  const cepSel = document.getElementById('cep-filter');
+  cepSel.innerHTML = '<option value="">Todos os CEPs</option>';
+  ceps.forEach(c => cepSel.innerHTML += `<option>${c}</option>`);
+
+  const matSel = document.getElementById('material-filter');
+  matSel.innerHTML = '<option value="">Todos os Materiais</option>';
+  materiais.forEach(m => matSel.innerHTML += `<option>${m}</option>`);
+
+  document.getElementById('search-input').addEventListener('input', applyFilters);
+  remessaSel.addEventListener('change', applyFilters);
+  cepSel.addEventListener('change', applyFilters);
+  matSel.addEventListener('change', applyFilters);
+}
+
+function applyFilters() {
+  const q        = document.getElementById('search-input').value.toLowerCase();
+  const remessa  = document.getElementById('remessa-filter').value;
+  const cep      = document.getElementById('cep-filter').value;
+  const material = document.getElementById('material-filter').value;
+
+  filtered = allGroups.filter(g => {
+    if (remessa  && g.remessa !== remessa) return false;
+    if (cep      && g.cep !== cep)         return false;
+    if (material) {
+      const matNorm = String(parseInt(String(g.material).trim(), 10) || g.material).trim();
+      if (matNorm !== material) return false;
+    }
+    if (q) {
+      const haystack = [
+        g.centro, g.shipmentId, g.remessa, g.agendamento,
+        g.nrTransporte, g.material, g.denominacao,
+        g.nomeCliente, g.nomeMotorista, g.placaSimples,
+        g.placaComposicao, g.nomeTransportadora, g.cep,
+      ].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+  page = 1;
+  renderSummary();
+  renderTable();
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('remessa-filter').value = '';
+  document.getElementById('cep-filter').value = '';
+  document.getElementById('material-filter').value = '';
+  applyFilters();
+}
+
+// ════════════════════════════════════════════════
+// SUMMARY CARDS
+// ════════════════════════════════════════════════
+function renderSummary() {
+  const totalRemessas = new Set(filtered.map(g => g.remessa).filter(Boolean)).size;
+  const totalMateriais = new Set(filtered.map(g => g.material).filter(Boolean)).size;
+  const totalCeps     = new Set(filtered.map(g => g.cep).filter(Boolean)).size;
+  const totalCubagem  = filtered.reduce((a, g) => a + g.pesoLiquido, 0);
+  const totalPedidos  = filtered.reduce((a, g) => a + g.qtdeRemessa, 0);
+
+  document.getElementById('card-total').textContent     = new Set(filtered.map(g => g.shipmentId).filter(Boolean)).size;
+  document.getElementById('card-dt').textContent        = filtered[0]?.nrTransporte || '—';
+  document.getElementById('card-remessas').textContent  = totalRemessas.toLocaleString('pt-BR');
+  document.getElementById('card-materiais').textContent = totalMateriais.toLocaleString('pt-BR');
+  document.getElementById('card-ceps').textContent      = totalCeps.toLocaleString('pt-BR');
+  document.getElementById('card-cubagem').textContent   = totalCubagem.toFixed(3).replace('.', ',');
+  document.getElementById('card-pedidos').textContent   = totalPedidos.toLocaleString('pt-BR');
+}
+
+// ════════════════════════════════════════════════
+// TABLE HEADER
+// ════════════════════════════════════════════════
+function buildTableHeader() {
+  const tr = document.getElementById('thead-row');
+  tr.innerHTML = '';
+  DISPLAY_COLS.forEach(col => {
+    const th = document.createElement('th');
+    th.dataset.key = col.key;
+    th.innerHTML = col.label + ' <span class="sort-icon">⇅</span>';
+    th.addEventListener('click', () => sortBy(col.key, th));
+    tr.appendChild(th);
+  });
+}
+
+// ════════════════════════════════════════════════
+// SORT
+// ════════════════════════════════════════════════
+function sortBy(key, th) {
+  if (sortCol === key) sortDir *= -1;
+  else { sortCol = key; sortDir = 1; }
+
+  document.querySelectorAll('thead th').forEach(h => {
+    h.classList.remove('sorted-asc', 'sorted-desc');
+    h.querySelector('.sort-icon').textContent = '⇅';
+  });
+  th.classList.add(sortDir === 1 ? 'sorted-asc' : 'sorted-desc');
+  th.querySelector('.sort-icon').textContent = sortDir === 1 ? '↑' : '↓';
+
+  filtered.sort((a, b) => {
+    let va = a[key], vb = b[key];
+    if (Array.isArray(va)) va = va.join(',');
+    if (Array.isArray(vb)) vb = vb.join(',');
+    if (typeof va === 'number') return (va - vb) * sortDir;
+    return String(va).localeCompare(String(vb), 'pt-BR') * sortDir;
+  });
+  page = 1;
+  renderTable();
+}
+
+// ════════════════════════════════════════════════
+// RENDER TABLE
+// ════════════════════════════════════════════════
+function renderTable() {
+  const tbody      = document.getElementById('tbody');
+  const tfoot      = document.getElementById('tfoot');
+  const emptyEl    = document.getElementById('empty');
+  const tableWrap  = document.getElementById('table-wrapper');
+  const paginationEl = document.getElementById('pagination');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+    emptyEl.classList.add('show');
+    tableWrap.classList.remove('show');
+    paginationEl.classList.remove('show');
+    return;
+  }
+  emptyEl.classList.remove('show');
+  tableWrap.classList.add('show');
+  paginationEl.classList.add('show');
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const start      = (page - 1) * PAGE_SIZE;
+  const pageData   = filtered.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = pageData.map(g =>
+    `<tr>${DISPLAY_COLS.map(col => renderCell(g, col.key)).join('')}</tr>`
+  ).join('');
+
+  // ── Tfoot: soma das colunas numéricas do filtered completo ──
+  const sumQtde  = filtered.reduce((a, g) => a + g.qtdeRemessa, 0);
+  const sumPeso  = filtered.reduce((a, g) => a + g.pesoLiquido, 0);
+  const sumVol   = filtered.reduce((a, g) => a + g.volumeAcumulado, 0);
+
+  const tfootCells = DISPLAY_COLS.map(col => {
+    if (col.key === 'centro') return `<td class="sum-label">∑ TOTAL</td>`;
+    if (col.key === 'qtdeRemessa') return `<td class="mono center-cell">${sumQtde.toLocaleString('pt-BR')}</td>`;
+    if (col.key === 'pesoLiquido') return `<td class="mono center-cell">${sumPeso.toFixed(3).replace('.', ',')} t</td>`;
+    if (col.key === 'volumeAcumulado') return `<td class="mono center-cell">${Math.round(sumVol).toLocaleString('pt-BR')}</td>`;
+    return `<td></td>`;
+  }).join('');
+
+  tfoot.innerHTML = `<tr>${tfootCells}</tr>`;
+
+  renderPagination(totalPages);
+}
+
+function renderCell(g, key) {
+  switch(key) {
+    case 'paletizacao':
+      const detail = g.paletizacaoDetail;
+      if (!detail || !detail.options) {
+        return `<td class="mono center-cell">${escHtml(String(g.paletizacao))}</td>`;
+      }
+      // Create dropdown with A, B, C options
+      const mat = detail.material;
+      const opts = detail.options;
+      const currentPref = detail.pref;
+      const dropdownHtml = `
+        <div class="palet-selector">
+          <span class="palet-value">${detail.value}</span>
+          <select class="palet-dropdown" data-material="${escHtml(mat)}" onchange="changePaletPref(this)">
+            <option value="A" ${currentPref === 'A' ? 'selected' : ''}>A (${opts.A || 0})</option>
+            <option value="B" ${currentPref === 'B' ? 'selected' : ''}>B (${opts.B || 0})</option>
+            <option value="C" ${currentPref === 'C' ? 'selected' : ''}>C (${opts.C || 0})</option>
+          </select>
+        </div>
+      `;
+      return `<td class="mono center-cell">${dropdownHtml}</td>`;
+    case 'pesoLiquido':
+      return `<td class="mono center-cell">${g.pesoLiquido.toFixed(3).replace('.', ',')} t</td>`;
+    case 'volumeAcumulado':
+      return `<td class="mono center-cell">${Math.round(g.volumeAcumulado).toLocaleString('pt-BR')}</td>`;
+    case 'qtdeRemessa':
+      return `<td class="mono center-cell">${g.qtdeRemessa.toLocaleString('pt-BR')}</td>`;
+    case 'agendamento':
+    case 'nrTransporte':
+    case 'shipmentId':
+    case 'remessa':
+    case 'cep':
+      return `<td class="mono">${escHtml(String(g[key] ?? ''))}</td>`;
+    default:
+      return `<td>${escHtml(String(g[key] ?? ''))}</td>`;
+  }
+}
+
+// ════════════════════════════════════════════════
+// CEP TABLES
+// ════════════════════════════════════════════════
+function renderCepTables() {
+  const container = document.getElementById('cep-tables-container');
+  container.innerHTML = '';
+
+  // Build map: CEP → { matMap, matDenom, locals, remessas, + header fields }
+  const cepMap = new Map();
+
+  rawDataRows.forEach(row => {
+    const cep      = getVal(row, 'cep')      || '(sem CEP)';
+    const material = String(getVal(row, 'material') || '').trim().replace(/\.0+$/, '') || '(sem material)';
+    const qtde     = Number(String(getVal(row, 'qtdeRemessa')).replace(',', '.')) || 0;
+    const local    = getVal(row, 'local');
+    const remessa  = getVal(row, 'remessa');
+    const denom    = getVal(row, 'denominacao');
+
+    if (!cepMap.has(cep)) {
+      cepMap.set(cep, {
+        matMap:   new Map(),
+        matDenom: new Map(),
+        locals:   new Set(),
+        remessas: new Set(),
+        // header fields — pega do primeiro row deste CEP
+        centro:        getVal(row, 'centro'),
+        shipmentId:    getVal(row, 'shipmentId'),
+        agendamento:   formatDate(getVal(row, 'agendamento')),
+        nrTransporte:  getVal(row, 'nrTransporte'),
+        nomeCliente:   getVal(row, 'nomeCliente'),
+        nomeMotorista: getVal(row, 'nomeMotorista'),
+        placaSimples:  getVal(row, 'placaSimples'),
+        placaComposicao: getVal(row, 'placaComposicao'),
+        nomeTransportadora: getVal(row, 'nomeTransportadora'),
+        pesoLiquido:   0,
+        volumeAcumulado: 0,
+        totalQtde:     0,
+      });
+    }
+    const entry = cepMap.get(cep);
+    entry.matMap.set(material, (entry.matMap.get(material) || 0) + qtde);
+    if (denom && !entry.matDenom.has(material)) entry.matDenom.set(material, denom);
+    if (local)   entry.locals.add(local);
+    if (remessa) entry.remessas.add(remessa);
+  });
+
+  // Compute totals from ALL rows (not per-CEP) for header
+  const totalPeso   = allGroups.reduce((a, g) => a + g.pesoLiquido, 0);
+  const totalVol    = allGroups.reduce((a, g) => a + g.volumeAcumulado, 0);
+  const totalQtdeAll = allGroups.reduce((a, g) => a + g.qtdeRemessa, 0);
+
+  // Sort CEPs alphabetically
+  const sortedCeps = [...cepMap.keys()].sort();
+
+  sortedCeps.forEach((cep, idx) => {
+    const entry = cepMap.get(cep);
+    const { matMap, matDenom, locals, remessas } = entry;
+    const materials  = [...matMap.entries()].sort((a, b) => b[1] - a[1]);
+    const totalQtde  = materials.reduce((acc, [, q]) => acc + q, 0);
+    const localStr   = [...locals].join(', ')  || '—';
+    const remessaStr = [...remessas].join(', ') || '—';
+
+    const rows = materials.map(([mat, qtde]) => `
+      <tr>
+        <td>${escHtml(String(Number(mat) || mat))}</td>
+        <td>${qtde.toLocaleString('pt-BR')}</td>
+      </tr>
+    `).join('');
+
+    // Romaneio data object
+    const romaneioData = {
+      cep,
+      local:              localStr,
+      centro:             entry.centro,
+      shipmentId:         entry.shipmentId,
+      agendamento:        entry.agendamento,
+      nrTransporte:       entry.nrTransporte,
+      nomeCliente:        entry.nomeCliente,
+      nomeMotorista:      entry.nomeMotorista,
+      placaSimples:       entry.placaSimples,
+      placaComposicao:    entry.placaComposicao,
+      nomeTransportadora: entry.nomeTransportadora,
+      remessas:           [...remessas],
+      pesoLiquido:        totalPeso,
+      volumeAcumulado:    totalVol,
+      totalQtde:          totalQtdeAll,
+      materials:          materials.map(([mat, qtde]) => ({
+        mat,
+        denom: matDenom.get(mat) || '',
+        qtde,
+      })),
+    };
+
+    const card = document.createElement('div');
+    card.className = 'cep-card';
+    card.style.animationDelay = `${idx * 60}ms`;
+    card.innerHTML = `
+      <div class="cep-card-header">
+        <div class="cep-card-meta">
+          <span class="cep-card-title">📍 ${escHtml(cep)}</span>
+          <span class="cep-meta-item">🏢 ${escHtml(localStr)}</span>
+          <span class="cep-meta-item">📦 ${escHtml(remessaStr)}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="cep-card-total">Total: <span>${totalQtde.toLocaleString('pt-BR')}</span></span>
+          <button class="btn-romaneio">🖨 Romaneio</button>
+          <button class="btn-inspecao">🔍 Inspeção</button>
+        </div>
+      </div>
+      <table class="cep-mini-table">
+        <thead><tr><th>Material</th><th>Qtde</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
+    card.querySelector('.btn-romaneio').addEventListener('click', () => gerarRomaneio(romaneioData));
+    card.querySelector('.btn-inspecao').addEventListener('click', () => gerarInspecao(romaneioData));
+    container.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════
+// PALETIZAÇÃO
+// ════════════════════════════════════════════════
+// Dados carregados de paletizacao.js
+
+// Atualiza o dropdown de filtro de centros dinamicamente
+function updateCentroFilter(centrosCodes) {
+  const selectEl = document.getElementById('palet-centro-filter');
+  if (!selectEl) return;
+  
+  // Limpa options atuais
+  selectEl.innerHTML = '';
+  
+  // Adiciona options para cada centro detectado
+  centrosCodes.forEach(codigo => {
+    const option = document.createElement('option');
+    option.value = codigo;
+    option.textContent = codigo;
+    selectEl.appendChild(option);
+  });
+}
+
+function renderPaletTable(data) {
+  const tbody = document.getElementById('palet-tbody');
+  const table = document.getElementById('palet-table');
+  const selectEl = document.getElementById('palet-centro-filter');
+  const selectedCentros = Array.from(selectEl.selectedOptions).map(opt => opt.value);
+  
+  // Update header based on selection
+  if (selectedCentros.length === 0) {
+    // No centro selected - show Material, Produto, and Família (single row header)
+    table.querySelector('thead').innerHTML = `
+      <tr>
+        <th>Material</th>
+        <th>Produto</th>
+        <th>Família</th>
+      </tr>`;
+    tbody.innerHTML = data.map(([mat, prod, familia]) => `
+      <tr>
+        <td>${escHtml(mat)}</td>
+        <td>${escHtml(prod)}</td>
+        <td>${escHtml(familia)}</td>
+      </tr>
+    `).join('');
+  } else {
+    // Show selected centros with A/B/C columns (two row header)
+    const headerCols = selectedCentros.map(c => `<th colspan="3">${c}</th>`).join('');
+    const subHeaders = selectedCentros.map(() => '<th>A</th><th>B</th><th>C</th>').join('');
+    
+    table.querySelector('thead').innerHTML = `
+      <tr>
+        <th rowspan="2">Material</th>
+        <th rowspan="2">Produto</th>
+        <th rowspan="2">Família</th>
+        ${headerCols}
+      </tr>
+      <tr>
+        ${subHeaders}
+      </tr>`;
+    
+    tbody.innerHTML = data.map(([mat, prod, familia, centros]) => {
+      const dataCols = selectedCentros.map(c => {
+        const vals = centros[c] || {A:0, B:0, C:0};
+        return `<td>${vals.A || 0}</td><td>${vals.B || 0}</td><td>${vals.C || 0}</td>`;
+      }).join('');
+      return `
+        <tr>
+          <td>${escHtml(mat)}</td>
+          <td>${escHtml(prod)}</td>
+          <td>${escHtml(familia)}</td>
+          ${dataCols}
+        </tr>
+      `;
+    }).join('');
+  }
+  
+  document.getElementById('palet-count').textContent =
+    `// ${data.length} produto${data.length !== 1 ? 's' : ''}`;
+}
+
+function filterPalet() {
+  const q = document.getElementById('palet-search').value.toLowerCase();
+  const selectEl = document.getElementById('palet-centro-filter');
+  const selectedCentros = Array.from(selectEl.selectedOptions).map(opt => opt.value);
+  
+  let result = q
+    ? PALET_DATA.filter(([mat, prod]) =>
+        mat.toLowerCase().includes(q) || prod.toLowerCase().includes(q))
+    : PALET_DATA;
+  
+  // If centros selected, filter products that have paletização > 0 in ANY selected centro (A, B, or C)
+  if (selectedCentros.length > 0) {
+    result = result.filter(([,,,centros]) => 
+      selectedCentros.some(c => {
+        const vals = centros[c] || {A:0, B:0, C:0};
+        return vals.A > 0 || vals.B > 0 || vals.C > 0;
+      })
+    );
+  }
+  
+  renderPaletTable(result);
+}
+
+function exportarPaletExcel() {
+  const selectEl = document.getElementById('palet-centro-filter');
+  const selectedCentros = Array.from(selectEl.selectedOptions).map(opt => opt.value);
+  
+  // Get filtered data
+  const q = document.getElementById('palet-search').value.toLowerCase();
+  let data = q
+    ? PALET_DATA.filter(([mat, prod]) =>
+        mat.toLowerCase().includes(q) || prod.toLowerCase().includes(q))
+    : PALET_DATA;
+  
+  if (selectedCentros.length > 0) {
+    data = data.filter(([,,,centros]) => 
+      selectedCentros.some(c => {
+        const vals = centros[c] || {A:0, B:0, C:0};
+        return vals.A > 0 || vals.B > 0 || vals.C > 0;
+      })
+    );
+  }
+  
+  // Get all unique centro codes from data
+  const allCentros = new Set();
+  PALET_DATA.forEach(([,,,centros]) => {
+    Object.keys(centros).forEach(c => allCentros.add(c));
+  });
+  const allCentrosCodes = Array.from(allCentros).sort();
+  
+  // Build worksheet data with A/B/C columns
+  const headers = ['Material', 'Produto', 'Família'];
+  const centrosToExport = selectedCentros.length > 0 ? selectedCentros : allCentrosCodes;
+  centrosToExport.forEach(c => {
+    headers.push(`${c}-A`, `${c}-B`, `${c}-C`);
+  });
+  
+  const rows = data.map(([mat, prod, familia, centros]) => {
+    const row = [mat, prod, familia];
+    centrosToExport.forEach(c => {
+      const vals = centros[c] || {A:0, B:0, C:0};
+      row.push(vals.A || 0, vals.B || 0, vals.C || 0);
+    });
+    return row;
+  });
+  
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Paletização');
+  
+  const today = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `paletizacao_${today}.xlsx`);
+}
+
+// ════════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  const embarqueEls = [
+    'upload-zone', 'status-bar', 'summary', 'filter-bar',
+    'table-wrapper', 'empty', 'pagination', 'cep-section'
+  ];
+  embarqueEls.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = tab === 'embarques' ? '' : 'none';
+  });
+
+  const paletEl = document.getElementById('page-paletizacao');
+  const indEl   = document.getElementById('page-indicadores');
+  const simEl   = document.getElementById('page-simulador'); // NOVA LINHA
+
+  if (tab === 'paletizacao') {
+    paletEl.classList.add('show');
+    indEl.classList.remove('show');
+    simEl.classList.remove('show');
+    renderPaletTable(PALET_DATA);
+  } else if (tab === 'indicadores') {
+    indEl.classList.add('show');
+    paletEl.classList.remove('show');
+    simEl.classList.remove('show');
+    renderIndicadores();
+  } else if (tab === 'simulador') {
+    simEl.classList.add('show');
+    indEl.classList.remove('show');
+    paletEl.classList.remove('show');
+    if (typeof draw3d === 'function' && BXS.length) draw3d(); // Repinta o canvas 3D
+  } else {
+    paletEl.classList.remove('show');
+    indEl.classList.remove('show');
+    simEl.classList.remove('show');
+  }
+}
+
+// ════════════════════════════════════════════════
+// RESET
+// ════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// CHANGE PALETIZAÇÃO PREFERENCE
+// ════════════════════════════════════════════════
+function changePaletPref(selectElement) {
+  const material = selectElement.getAttribute('data-material');
+  const newPref = selectElement.value;
+  
+  console.log(`✓ Paletização alterada: Material ${material} → Opção ${newPref}`);
+  
+  // Save preference with BOTH formats to ensure lookup works
+  const matNum = String(parseInt(material, 10));
+  paletPrefs[material] = newPref;  // Original format
+  paletPrefs[matNum] = newPref;     // Numeric format
+  
+  console.log(`  → Salvando: paletPrefs['${material}'] = '${newPref}'`);
+  console.log(`  → Salvando: paletPrefs['${matNum}'] = '${newPref}'`);
+  
+  // Update all rows with this material
+  allGroups.forEach(g => {
+    const matStr = String(g.material || '').trim().replace(/\.0+$/, '');
+    const matStrNum = String(parseInt(matStr, 10));
+    if (matStr === material || matStrNum === material || matStr === matNum || matStrNum === matNum) {
+      g.paletizacaoDetail.pref = newPref;
+      const opts = g.paletizacaoDetail.options;
+      if (opts && opts[newPref]) {
+        const newVal = opts[newPref];
+        g.paletizacao = newVal > 0 ? newVal : '-';
+        g.paletizacaoDetail.value = g.paletizacao;
+        console.log(`  → Novo valor para ${matStr}: ${newVal} (opções: A=${opts.A}, B=${opts.B}, C=${opts.C})`);
+      }
+    }
+  });
+  
+  // Re-filter and re-render
+  applyFilters();
+  renderTable();
+  
+  // Force re-render of CEP tables to recalculate paletes fechados
+  renderCepTables();
+  
+  console.log('✓ Tabelas atualizadas com nova paletização');
+  console.log('✓ Estado atual de paletPrefs:', paletPrefs);
+}
+
+function resetDashboard() {
+  // Limpa estado
+  allGroups   = [];
+  filtered    = [];
+  rawDataRows = [];
+  globalIdx   = {};
+  sortCol     = null;
+  sortDir     = 1;
+  page        = 1;
+
+  // Limpa tabela e tfoot
+  document.getElementById('tbody').innerHTML  = '';
+  document.getElementById('tfoot').innerHTML  = '';
+  document.getElementById('thead-row').innerHTML = '';
+  document.getElementById('cep-tables-container').innerHTML = '';
+
+  // Esconde seções
+  document.getElementById('summary').classList.remove('show');
+  document.getElementById('filter-bar').classList.remove('show');
+  document.getElementById('table-wrapper').classList.remove('show');
+  document.getElementById('pagination').classList.remove('show');
+  document.getElementById('cep-section').classList.remove('show');
+  document.getElementById('empty').classList.remove('show');
+
+  // Esconde status bar
+  document.getElementById('status-bar').className = '';
+
+  // Reseta input de arquivo e mostra upload zone
+  document.getElementById('file-input').value = '';
+  document.getElementById('upload-zone').style.display = '';
+}
+
+
+// ════════════════════════════════════════════════
+// EXPORTAR EXCEL
+// ════════════════════════════════════════════════
+function exportarExcel() {
+  if (!filtered.length) return;
+
+  const cols = [
+    { key: 'centro',             label: 'Centro' },
+    { key: 'shipmentId',         label: 'Shipment' },
+    { key: 'remessa',            label: 'Remessa' },
+    { key: 'agendamento',        label: 'Agendamento' },
+    { key: 'nrTransporte',       label: 'DT' },
+    { key: 'material',           label: 'Material' },
+    { key: 'denominacao',        label: 'Denominação' },
+    { key: 'paletizacao',        label: 'Paletização' },
+    { key: 'pesoLiquido',        label: 'Peso (t)' },
+    { key: 'volumeAcumulado',    label: 'Cubagem da DT' },
+    { key: 'qtdeRemessa',        label: 'Pedido Fardos/Caixas' },
+    { key: 'nomeCliente',        label: 'Cliente' },
+    { key: 'nomeMotorista',      label: 'Motorista' },
+    { key: 'placaSimples',       label: 'Placa Cavalo' },
+    { key: 'placaComposicao',    label: 'Placa Composição' },
+    { key: 'nomeTransportadora', label: 'Transportadora' },
+    { key: 'cep',                label: 'CEP' },
+  ];
+
+  const data = [
+    cols.map(c => c.label),
+    ...filtered.map(g => cols.map(c => {
+      if (c.key === 'pesoLiquido')     return +g.pesoLiquido.toFixed(3);
+      if (c.key === 'volumeAcumulado') return Math.round(g.volumeAcumulado);
+      return g[c.key] ?? '';
+    })),
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Embarques');
+  XLSX.writeFile(wb, `romanix_embarques_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ════════════════════════════════════════════════
+// INSPEÇÃO DE CARREGAMENTO
+// ════════════════════════════════════════════════
+function gerarInspecao(d) {
+  const centro = String(d.centro).trim();
+  const paletMap = new Map();
+  const familiaMap = new Map();
+  PALET_DATA.forEach(([mat, prod, familia, centros]) => {
+    const s = String(mat).trim();
+    const n = String(parseInt(s, 10));
+    const centroData = centros[centro] ?? centros[String(parseInt(centro, 10))];
+    if (centroData) {
+      // Get preference (A, B, or C) for this material
+      const pref = paletPrefs[s] || paletPrefs[n] || 'A';
+      const pal = centroData[pref] || 0;
+      paletMap.set(s, pal);
+      paletMap.set(n, pal);
+    } else {
+      paletMap.set(s, 0);
+      paletMap.set(n, 0);
+    }
+    familiaMap.set(s, familia || '');
+    familiaMap.set(n, familia || '');
+  });
+
+  const items = d.materials
+    .map(({ mat, qtde }) => {
+      const matStr  = String(parseInt(String(mat).trim(), 10)) || String(mat).trim();
+      const pal     = paletMap.get(String(mat).trim()) || paletMap.get(matStr) || null;
+      const familia = familiaMap.get(String(mat).trim()) || familiaMap.get(matStr) || '';
+      const fechados = (pal && pal > 0) ? Math.floor(qtde / pal) : 0;
+      return { mat: matStr, qtde, pal, fechados, familia };
+    })
+    .filter(r => r.fechados > 0)
+    .sort((a, b) => b.fechados - a.fechados);
+
+  if (!items.length) {
+    alert('Nenhum material com paletes fechados neste CEP.');
+    return;
+  }
+
+  const remessaStr   = d.remessas.join(', ') || '—';
+  const remessaCount = d.remessas.length;
+
+  const blocksHtml = items.map(({ mat, fechados, familia }) => {
+    const paletes = Array(fechados).fill('📦').join('');
+    return `
+      <div class="ins-block">
+        <div class="ins-paletes">${paletes}</div>
+        <div class="ins-mat">${mat}</div>
+        <div class="ins-familia">${familia}</div>
+        <div class="ins-info">${fechados} palete${fechados > 1 ? 's' : ''}</div>
+      </div>`;
+  }).join('');
+
+  // Materiais com frações (sem paletes fechados ou com resto)
+  const fracoesItems = d.materials
+    .map(({ mat, qtde }) => {
+      const matStr  = String(parseInt(String(mat).trim(), 10)) || String(mat).trim();
+      const pal     = paletMap.get(String(mat).trim()) || paletMap.get(matStr) || null;
+      const fracao  = (pal && pal > 0) ? (qtde % pal) : qtde;
+      return { mat: matStr, fracao };
+    })
+    .filter(r => r.fracao > 0)
+    .sort((a, b) => b.fracao - a.fracao);
+
+  const fracoesHtml = fracoesItems.length ? `
+    <div class="ins-fracoes">
+      <div class="ins-fracoes-title">+ Unidades Avulsas (Frações)</div>
+      <div class="ins-fracoes-list">
+        ${fracoesItems.map(r => `
+          <div class="ins-fracao-item">
+            <span class="ins-fracao-mat">${r.mat}</span>
+            <span class="ins-fracao-qtde">+${r.fracao.toLocaleString('pt-BR')} un.</span>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const content = `
+    <div class="ins-header">
+      <div class="ins-title-row">
+        <div class="ins-logo">🚛 ROMANIX</div>
+        <div class="ins-doca">
+          <span class="ins-doca-label">DOCA:</span>
+          <div class="ins-doca-circles">
+            <span class="ins-doca-circle">01</span>
+            <span class="ins-doca-circle">02</span>
+            <span class="ins-doca-circle">03</span>
+            <span class="ins-doca-circle">04</span>
+            <span class="ins-doca-circle">05</span>
+            <span class="ins-doca-circle">06</span>
+            <span class="ins-doca-circle">07</span>
+            <span class="ins-doca-circle">08</span>
+            <span class="ins-doca-circle">09</span>
+            <span class="ins-doca-circle">10</span>
+            <span class="ins-doca-circle">11</span>
+          </div>
+        </div>
+        <div class="ins-badge">INSPEÇÃO DE CARREGAMENTO</div>
+        <div class="ins-dt">DT: ${escHtml(d.nrTransporte)}</div>
+      </div>
+      <div class="ins-grid">
+        <div class="ins-field ins-field--xs"><span class="ins-label">Centro</span><span class="ins-value">${escHtml(d.centro)}</span></div>
+        <div class="ins-field ins-field--sm"><span class="ins-label">Shipment</span><span class="ins-value">${escHtml(d.shipmentId)}</span></div>
+        <div class="ins-field ins-field--sm"><span class="ins-label">Agendamento</span><span class="ins-value">${escHtml(d.agendamento)}</span></div>
+        <div class="ins-field ins-field--lg"><span class="ins-label">CEP</span><span class="ins-value">${escHtml(d.cep)}</span></div>
+        <div class="ins-field ins-field--lg"><span class="ins-label">Local</span><span class="ins-value">${escHtml(d.local || '—')}</span></div>
+        <div class="ins-field ins-field--xl"><span class="ins-label">Remessas (${remessaCount})</span><span class="ins-value">${escHtml(remessaStr)}</span></div>
+        <div class="ins-field ins-field--lg"><span class="ins-label">Cliente</span><span class="ins-value">${escHtml(d.nomeCliente)}</span></div>
+      </div>
+      <div class="ins-divider"></div>
+      <div class="ins-grid">
+        <div class="ins-field ins-field--md"><span class="ins-label">Motorista</span><span class="ins-value">${escHtml(d.nomeMotorista)}</span></div>
+        <div class="ins-field ins-field--sm"><span class="ins-label">Placa Cavalo</span><span class="ins-value">${escHtml(d.placaSimples)}</span></div>
+        <div class="ins-field ins-field--sm"><span class="ins-label">Composição</span><span class="ins-value">${escHtml(d.placaComposicao)}</span></div>
+        <div class="ins-field ins-field--xl"><span class="ins-label">Transportadora</span><span class="ins-value">${escHtml(d.nomeTransportadora)}</span></div>
+      </div>
+    </div>
+    <div class="ins-blocks">${blocksHtml}</div>
+    ${fracoesHtml}`;
+
+  document.getElementById('romaneio-title').textContent =
+    `Inspeção — DT ${d.nrTransporte} / CEP ${d.cep}`;
+  document.getElementById('romaneio-content').innerHTML = `<div class="ins-page">${content}</div>`;
+  document.getElementById('romaneio-modal').classList.add('open');
+  document.getElementById('romaneio-modal').scrollTop = 0;
+}
+
+// ════════════════════════════════════════════════
+// ROMANEIO
+// ════════════════════════════════════════════════
+function gerarRomaneio(d) {
+  const ROWS_PER_PAGE = 30;
+
+  // paletMap considerando o centro do embarque
+  const centro = String(d.centro).trim();
+  const paletMap = new Map();
+  const familiaMap = new Map();
+  PALET_DATA.forEach(([mat, prod, familia, centros]) => {
+    const s = String(mat).trim();
+    const n = String(parseInt(s, 10));
+    const centroData = centros[centro] ?? centros[String(parseInt(centro, 10))];
+    if (centroData) {
+      // Get preference (A, B, or C) for this material
+      const pref = paletPrefs[s] || paletPrefs[n] || 'A';
+      const pal = centroData[pref] || 0;
+      paletMap.set(s, pal);
+      paletMap.set(n, pal);
+    } else {
+      paletMap.set(s, 0);
+      paletMap.set(n, 0);
+    }
+    familiaMap.set(s, familia || '');
+    familiaMap.set(n, familia || '');
+  });
+
+  function getPal(mat) {
+    const s = String(mat).trim().replace(/\.0+$/, '');
+    const n = String(parseInt(s, 10));
+    return paletMap.get(s) ?? paletMap.get(n) ?? null;
+  }
+
+  function getFamilia(mat) {
+    const s = String(mat).trim().replace(/\.0+$/, '');
+    const n = String(parseInt(s, 10));
+    return familiaMap.get(s) ?? familiaMap.get(n) ?? '';
+  }
+
+  // totalQtde do CEP (soma dos materiais deste CEP)
+  const cepTotalQtde = d.materials.reduce((a, m) => a + m.qtde, 0);
+
+  // Prepare rows with palet calc
+  const tableRows = d.materials.map(({ mat, denom, qtde }) => {
+    const matStr   = String(parseInt(String(mat).trim(), 10)) || String(mat).trim();
+    const pal      = getPal(mat);
+    const familia  = getFamilia(mat);
+    const fechados = (pal !== null && pal > 0) ? Math.floor(qtde / pal) : 0;
+    const fracoes  = (pal !== null && pal > 0) ? (qtde % pal)           : qtde;
+    return { mat: matStr, denom, qtde, fechados, fracoes, familia };
+  });
+
+  const remessaStr   = d.remessas.join(', ') || '—';
+  const remessaCount = d.remessas.length;
+
+  function buildHeader() {
+    return `
+    <div class="rom-header">
+      <div class="rom-title-row">
+        <div class="rom-logo">🚛 ROMANIX</div>
+        <div class="rom-doca">
+          <span class="rom-doca-label">DOCA:</span>
+          <div class="rom-doca-circles">
+            <span class="rom-doca-circle">01</span>
+            <span class="rom-doca-circle">02</span>
+            <span class="rom-doca-circle">03</span>
+            <span class="rom-doca-circle">04</span>
+            <span class="rom-doca-circle">05</span>
+            <span class="rom-doca-circle">06</span>
+            <span class="rom-doca-circle">07</span>
+            <span class="rom-doca-circle">08</span>
+            <span class="rom-doca-circle">09</span>
+            <span class="rom-doca-circle">10</span>
+            <span class="rom-doca-circle">11</span>
+          </div>
+        </div>
+        <div class="rom-dt">DT: ${escHtml(d.nrTransporte)}</div>
+      </div>
+      <div class="rom-grid rom-grid--smart">
+        <div class="rom-field rom-field--xs"><span class="rom-label">Centro</span><span class="rom-value">${escHtml(d.centro)}</span></div>
+        <div class="rom-field rom-field--sm"><span class="rom-label">Shipment</span><span class="rom-value">${escHtml(d.shipmentId)}</span></div>
+        <div class="rom-field rom-field--sm"><span class="rom-label">Agendamento</span><span class="rom-value">${escHtml(d.agendamento)}</span></div>
+        <div class="rom-field rom-field--lg"><span class="rom-label">CEP</span><span class="rom-value">${escHtml(d.cep)}</span></div>
+        <div class="rom-field rom-field--lg"><span class="rom-label">Local</span><span class="rom-value">${escHtml(d.local)}</span></div>
+        <div class="rom-field rom-field--xl"><span class="rom-label">Remessas (${remessaCount})</span><span class="rom-value">${escHtml(remessaStr)}</span></div>
+        <div class="rom-field rom-field--sm"><span class="rom-label">Peso Líquido</span><span class="rom-value">${d.pesoLiquido.toFixed(3).replace('.', ',')} t</span></div>
+        <div class="rom-field rom-field--sm"><span class="rom-label">Cubagem da DT</span><span class="rom-value">${Math.round(d.volumeAcumulado).toLocaleString('pt-BR')}</span></div>
+        <div class="rom-field rom-field--sm"><span class="rom-label">Total Fardos</span><span class="rom-value rom-value--highlight">${cepTotalQtde.toLocaleString('pt-BR')}</span></div>
+        <div class="rom-field rom-field--lg"><span class="rom-label">Cliente</span><span class="rom-value">${escHtml(d.nomeCliente)}</span></div>
+      </div>
+      <div class="rom-divider"></div>
+      <div class="rom-grid rom-grid--smart">
+        <div class="rom-field rom-field--md"><span class="rom-label">Motorista</span><span class="rom-value">${escHtml(d.nomeMotorista)}</span></div>
+        <div class="rom-field rom-field--sm"><span class="rom-label">Placa Cavalo</span><span class="rom-value">${escHtml(d.placaSimples)}</span></div>
+        <div class="rom-field rom-field--sm"><span class="rom-label">Composição</span><span class="rom-value">${escHtml(d.placaComposicao)}</span></div>
+        <div class="rom-field rom-field--xl"><span class="rom-label">Transportadora</span><span class="rom-value">${escHtml(d.nomeTransportadora)}</span></div>
+      </div>
+    </div>`;
+  }
+
+  function buildTableHead() {
+    return `
+    <table class="rom-table">
+      <thead>
+        <tr>
+          <th class="col-mat">Material</th>
+          <th class="col-denom">Produto (Denominação)</th>
+          <th class="col-familia">Família</th>
+          <th class="col-num">Qtde</th>
+          <th class="col-num">Paletes Fechados</th>
+          <th class="col-num">Frações</th>
+          <th class="col-blank">Check Conferente</th>
+          <th class="col-blank">Corte</th>
+        </tr>
+      </thead>
+      <tbody>`;
+  }
+
+  const pages = [];
+  for (let i = 0; i < tableRows.length; i += ROWS_PER_PAGE) {
+    pages.push(tableRows.slice(i, i + ROWS_PER_PAGE));
+  }
+  if (pages.length === 0) pages.push([]);
+
+  const totalPages = pages.length;
+
+  const pagesHtml = pages.map((pageRows, pi) => {
+    const isLastPage = pi === totalPages - 1;
+    const bodyRows = pageRows.map(r => `
+      <tr>
+        <td class="col-mat">${escHtml(r.mat)}</td>
+        <td class="col-denom">${escHtml(r.denom)}</td>
+        <td class="col-familia">${escHtml(r.familia)}</td>
+        <td class="rom-center">${r.qtde.toLocaleString('pt-BR')}</td>
+        <td class="rom-center">${r.fechados}</td>
+        <td class="rom-center">${r.fracoes}</td>
+        <td class="rom-blank"></td>
+        <td class="rom-blank"></td>
+      </tr>`).join('');
+
+    const obs = isLastPage ? `
+      <div class="rom-obs">
+        <div class="rom-obs-inner">
+          <div style="display:flex;flex-direction:column;flex:1;border-right:1px solid #000;">
+            <div class="rom-obs-title">Observações</div>
+            <div class="rom-obs-body"></div>
+          </div>
+          <div class="rom-separador">
+            <div class="rom-separador-title">Separador</div>
+            <div class="rom-separador-body">
+              <div class="rom-separador-line"></div>
+            </div>
+          </div>
+          <div class="rom-entrega">
+            <div class="rom-entrega-title">Ordem de Carregamento</div>
+            <div class="rom-entrega-box"></div>
+          </div>
+          <div class="rom-stamp">
+            <div class="rom-stamp-title">Carimbo de Corte</div>
+            <div class="rom-stamp-box"></div>
+          </div>
+        </div>
+      </div>` : '';
+
+    return `
+    <div class="rom-page">
+      ${buildHeader()}
+      <div class="rom-page-num">Página ${pi + 1} de ${totalPages}</div>
+      ${buildTableHead()}
+        ${bodyRows}
+      </tbody>
+    </table>
+    ${obs}
+  </div>`;
+  }).join('');
+
+  document.getElementById('romaneio-title').textContent =
+    `Romaneio — DT ${d.nrTransporte} / CEP ${d.cep}`;
+  document.getElementById('romaneio-content').innerHTML = pagesHtml;
+  document.getElementById('romaneio-modal').classList.add('open');
+  document.getElementById('romaneio-modal').scrollTop = 0;
+}
+
+// ════════════════════════════════════════════════
+// CURSOR NEON + PARTÍCULAS
+// ════════════════════════════════════════════════
+(function() {
+  const arrow  = document.getElementById('cursor-arrow');
+  const canvas = document.getElementById('cursor-canvas');
+  const ctx    = canvas.getContext('2d');
+
+  let mx = -100, my = -100;
+  const particles = [];
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX;
+    my = e.clientY;
+    arrow.style.transform = `translate(${mx}px, ${my}px)`;
+
+    const isLight = document.body.classList.contains('light-theme');
+    const color   = isLight ? '#1a8a00' : '#39ff14';
+    particles.push({
+      x: mx + 4, y: my + 4,
+      vx: (Math.random() - .5) * 1.8,
+      vy: (Math.random() - .5) * 1.8 - .3,
+      life: 1,
+      decay: .045 + Math.random() * .04,
+      size: 1.5 + Math.random() * 2,
+      color,
+    });
+  });
+
+  // Rotaciona levemente ao clicar
+  document.addEventListener('mousedown', () => {
+    arrow.style.filter = 'drop-shadow(0 0 8px #39ff14) drop-shadow(0 0 20px #39ff14)';
+  });
+  document.addEventListener('mouseup', () => {
+    arrow.style.filter = 'drop-shadow(0 0 4px #39ff14) drop-shadow(0 0 10px #39ff14)';
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x    += p.vx;
+      p.y    += p.vy;
+      p.vy   += .05;
+      p.life -= p.decay;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+      ctx.save();
+      ctx.globalAlpha = p.life * .8;
+      ctx.fillStyle   = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur  = 6;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  animate();
+})();
+
+const chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function neonPalette(n) {
+  const base = ['#39ff14','#00e5ff','#ff6ec7','#ffe600','#ff4500','#a259ff','#00ff99','#ff9f00','#00bfff','#ff3c3c'];
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(base[i % base.length]);
+  return out;
+}
+
+const CHART_DEFAULTS = {
+  color: '#b0b0b0',
+  font: { family: "'IBM Plex Mono', monospace", size: 11 },
+};
+
+function chartOpts(extra = {}) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: '#b0b0b0', font: CHART_DEFAULTS.font, boxWidth: 12 } },
+      tooltip: { bodyFont: CHART_DEFAULTS.font, titleFont: CHART_DEFAULTS.font },
+    },
+    scales: {
+      x: { ticks: { color: '#b0b0b0', font: CHART_DEFAULTS.font }, grid: { color: '#1e1e1e' } },
+      y: { ticks: { color: '#b0b0b0', font: CHART_DEFAULTS.font }, grid: { color: '#1e1e1e' } },
+    },
+    ...extra,
+  };
+}
+
+function renderIndicadores() {
+  if (!rawDataRows.length) return;
+
+  document.getElementById('ind-empty').style.display   = 'none';
+  document.getElementById('ind-content').style.display = 'block';
+
+  // Pega centro da primeira linha do arquivo
+  const centro = String(getVal(rawDataRows[0], 'centro') || '').trim();
+  const paletMap = new Map();
+  PALET_DATA.forEach(([mat,,,centros]) => {
+    const s = String(mat).trim();
+    const n = String(parseInt(s, 10));
+    const centroData = centros[centro] ?? centros[String(parseInt(centro, 10))];
+    if (centroData) {
+      // Get preference (A, B, or C) for this material
+      const pref = paletPrefs[s] || paletPrefs[n] || 'A';
+      const pal = centroData[pref] || 0;
+      paletMap.set(s, pal);
+      paletMap.set(n, pal);
+    } else {
+      paletMap.set(s, 0);
+      paletMap.set(n, 0);
+    }
+  });
+
+  // ── Agrupa dados ──────────────────────────────
+  const matQtde    = new Map();
+  const cepQtde    = new Map();
+
+  rawDataRows.forEach(row => {
+    const mat    = String(getVal(row, 'material') || '').trim().replace(/\.0+$/, '') || '(sem)';
+    const matNum = String(parseInt(mat, 10)) || mat;
+    const cep    = getVal(row, 'cep')    || '(sem CEP)';
+    const qtde   = Number(String(getVal(row, 'qtdeRemessa')).replace(',', '.')) || 0;
+
+    matQtde.set(matNum,  (matQtde.get(matNum)   || 0) + qtde);
+    cepQtde.set(cep,     (cepQtde.get(cep)      || 0) + qtde);
+  });
+
+  // ── 1. Top Materiais ──────────────────────────
+  destroyChart('materiais');
+
+  // ── KPI Cards de destaque ─────────────────────
+  const kpiMat     = [...matQtde.entries()].sort((a,b) => b[1]-a[1])[0];
+  const kpiCep     = [...cepQtde.entries()].sort((a,b) => b[1]-a[1])[0];
+  const totalGeral = [...matQtde.values()].reduce((a,b) => a+b, 0);
+  document.getElementById('ind-kpi-row').innerHTML = `
+    <div class="ind-kpi ind-kpi--mat">
+      <div class="ind-kpi-label">🏆 Material mais expedido</div>
+      <div class="ind-kpi-value">${kpiMat ? kpiMat[0] : '—'}</div>
+      <div class="ind-kpi-sub">${kpiMat ? kpiMat[1].toLocaleString('pt-BR') + ' unidades' : ''}</div>
+    </div>
+    <div class="ind-kpi ind-kpi--cep">
+      <div class="ind-kpi-label">📍 CEP com maior volume</div>
+      <div class="ind-kpi-value">${kpiCep ? kpiCep[0] : '—'}</div>
+      <div class="ind-kpi-sub">${kpiCep ? kpiCep[1].toLocaleString('pt-BR') + ' unidades' : ''}</div>
+    </div>
+    <div class="ind-kpi ind-kpi--tot">
+      <div class="ind-kpi-label">📦 Total geral expedido</div>
+      <div class="ind-kpi-value">${totalGeral.toLocaleString('pt-BR')}</div>
+      <div class="ind-kpi-sub">unidades no embarque</div>
+    </div>`;
+  const topMat = [...matQtde.entries()].sort((a,b) => b[1]-a[1]).slice(0, 15);
+  const ctx1 = document.getElementById('chart-materiais').getContext('2d');
+  chartInstances['materiais'] = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: topMat.map(([m]) => m),
+      datasets: [{ label: 'Qtde', data: topMat.map(([,q]) => q),
+        backgroundColor: neonPalette(topMat.length), borderRadius: 4, borderSkipped: false }],
+    },
+    options: { ...chartOpts(), indexAxis: 'y',
+      scales: {
+        x: { ticks: { color: '#b0b0b0', font: CHART_DEFAULTS.font }, grid: { color: '#1e1e1e' } },
+        y: { ticks: { color: '#39ff14', font: { ...CHART_DEFAULTS.font, weight: '700' } }, grid: { color: '#1e1e1e' } },
+      },
+      plugins: { legend: { display: false }, tooltip: { bodyFont: CHART_DEFAULTS.font, titleFont: CHART_DEFAULTS.font } },
+    },
+  });
+
+  // ── 2. Qtde por CEP ───────────────────────────
+  destroyChart('cep');
+  const topCep = [...cepQtde.entries()].sort((a,b) => b[1]-a[1]).slice(0, 12);
+  const ctx2 = document.getElementById('chart-cep').getContext('2d');
+  chartInstances['cep'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: topCep.map(([c]) => c),
+      datasets: [{ label: 'Qtde', data: topCep.map(([,q]) => q),
+        backgroundColor: '#00e5ff', borderRadius: 4, borderSkipped: false }],
+    },
+    options: chartOpts({ plugins: { legend: { display: false }, tooltip: { bodyFont: CHART_DEFAULTS.font, titleFont: CHART_DEFAULTS.font } } }),
+  });
+
+  // ── 6. Paletes Fechados vs Frações ────────────
+  destroyChart('paletes');
+  const paletArr = [...matQtde.entries()]
+    .map(([mat, qtde]) => {
+      const pal = paletMap.get(mat) || paletMap.get(String(parseInt(mat,10))) || null;
+      if (!pal || pal === 0) return { mat, fechados: 0, fracoes: qtde };
+      return { mat, fechados: Math.floor(qtde / pal), fracoes: qtde % pal };
+    })
+    .filter(r => r.fechados > 0 || r.fracoes > 0)
+    .sort((a,b) => (b.fechados + b.fracoes/100) - (a.fechados + a.fracoes/100))
+    .slice(0, 12);
+
+  const ctx6 = document.getElementById('chart-paletes').getContext('2d');
+  chartInstances['paletes'] = new Chart(ctx6, {
+    type: 'bar',
+    data: {
+      labels: paletArr.map(r => r.mat),
+      datasets: [
+        { label: 'Paletes Fechados', data: paletArr.map(r => r.fechados), backgroundColor: '#39ff14', borderRadius: 4, borderSkipped: false },
+        { label: 'Frações',          data: paletArr.map(r => r.fracoes),  backgroundColor: '#ff6ec7', borderRadius: 4, borderSkipped: false },
+      ],
+    },
+    options: chartOpts({ scales: {
+      x: { stacked: false, ticks: { color: '#39ff14', font: { ...CHART_DEFAULTS.font, weight: '700' } }, grid: { color: '#1e1e1e' } },
+      y: { stacked: false, ticks: { color: '#b0b0b0', font: CHART_DEFAULTS.font }, grid: { color: '#1e1e1e' } },
+    }}),
+  });
+}
+
+function gerarRomaneioGeral() {
+  if (!rawDataRows.length) return;
+
+  // Consolidar materiais de TODAS as linhas (sem filtro de CEP)
+  const matMap   = new Map();
+  const denomMap = new Map();
+
+  rawDataRows.forEach(row => {
+    const mat   = String(getVal(row, 'material') || '').trim().replace(/\.0+$/, '') || '(sem material)';
+    const qtde  = Number(String(getVal(row, 'qtdeRemessa')).replace(',', '.')) || 0;
+    const denom = getVal(row, 'denominacao');
+    matMap.set(mat, (matMap.get(mat) || 0) + qtde);
+    if (denom && !denomMap.has(mat)) denomMap.set(mat, denom);
+  });
+
+  // Campos de cabeçalho da primeira linha
+  const first = rawDataRows[0];
+  const g = key => getVal(first, key);
+
+  const remessas  = [...new Set(rawDataRows.map(r => getVal(r, 'remessa')).filter(Boolean))];
+  const ceps      = [...new Set(rawDataRows.map(r => getVal(r, 'cep')).filter(Boolean))].sort();
+  const locais    = [...new Set(rawDataRows.map(r => getVal(r, 'local')).filter(Boolean))].sort();
+  const totalPeso = allGroups.reduce((a, r) => a + r.pesoLiquido, 0);
+  const totalVol  = allGroups.reduce((a, r) => a + r.volumeAcumulado, 0);
+  const totalQtde = allGroups.reduce((a, r) => a + r.qtdeRemessa, 0);
+
+  const materials = [...matMap.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([mat, qtde]) => ({ mat, denom: denomMap.get(mat) || '', qtde }));
+
+  gerarRomaneio({
+    cep:                ceps.join(', ') || '—',
+    local:              locais.join(', ') || '—',
+    centro:             g('centro'),
+    shipmentId:         g('shipmentId'),
+    agendamento:        formatDate(g('agendamento')),
+    nrTransporte:       g('nrTransporte'),
+    nomeCliente:        g('nomeCliente'),
+    nomeMotorista:      g('nomeMotorista'),
+    placaSimples:       g('placaSimples'),
+    placaComposicao:    g('placaComposicao'),
+    nomeTransportadora: g('nomeTransportadora'),
+    remessas,
+    pesoLiquido:        totalPeso,
+    volumeAcumulado:    totalVol,
+    totalQtde,
+    materials,
+  });
+}
+
+function gerarInspecaoGeral() {
+  if (!rawDataRows.length) return;
+
+  const matMap   = new Map();
+  const denomMap = new Map();
+
+  rawDataRows.forEach(row => {
+    const mat   = String(getVal(row, 'material') || '').trim().replace(/\.0+$/, '') || '(sem material)';
+    const qtde  = Number(String(getVal(row, 'qtdeRemessa')).replace(',', '.')) || 0;
+    const denom = getVal(row, 'denominacao');
+    matMap.set(mat, (matMap.get(mat) || 0) + qtde);
+    if (denom && !denomMap.has(mat)) denomMap.set(mat, denom);
+  });
+
+  const first = rawDataRows[0];
+  const g = key => getVal(first, key);
+  const remessas = [...new Set(rawDataRows.map(r => getVal(r, 'remessa')).filter(Boolean))];
+  const ceps     = [...new Set(rawDataRows.map(r => getVal(r, 'cep')).filter(Boolean))].sort();
+  const locais   = [...new Set(rawDataRows.map(r => getVal(r, 'local')).filter(Boolean))].sort();
+
+  const materials = [...matMap.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([mat, qtde]) => ({ mat, denom: denomMap.get(mat) || '', qtde }));
+
+  gerarInspecao({
+    cep:                ceps.join(', ') || '—',
+    local:              locais.join(', ') || '—',
+    centro:             g('centro'),
+    shipmentId:         g('shipmentId'),
+    agendamento:        formatDate(g('agendamento')),
+    nrTransporte:       g('nrTransporte'),
+    nomeCliente:        g('nomeCliente'),
+    nomeMotorista:      g('nomeMotorista'),
+    placaSimples:       g('placaSimples'),
+    placaComposicao:    g('placaComposicao'),
+    nomeTransportadora: g('nomeTransportadora'),
+    remessas,
+    pesoLiquido:        allGroups.reduce((a, r) => a + r.pesoLiquido, 0),
+    volumeAcumulado:    allGroups.reduce((a, r) => a + r.volumeAcumulado, 0),
+    totalQtde:          allGroups.reduce((a, r) => a + r.qtdeRemessa, 0),
+    materials,
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════
+// PAGINATION
+// ════════════════════════════════════════════════
+function renderPagination(totalPages) {
+  const start = (page - 1) * PAGE_SIZE + 1;
+  const end   = Math.min(page * PAGE_SIZE, filtered.length);
+  document.getElementById('page-info').textContent =
+    `${start}–${end} de ${filtered.length}`;
+
+  document.getElementById('btn-prev').disabled = page === 1;
+  document.getElementById('btn-next').disabled = page === totalPages;
+
+  // Page numbers (max 7 shown)
+  const numEl = document.getElementById('page-numbers');
+  numEl.innerHTML = '';
+  const range = paginationRange(page, totalPages);
+  range.forEach(p => {
+    if (p === '…') {
+      const span = document.createElement('span');
+      span.className = 'page-info';
+      span.textContent = '…';
+      numEl.appendChild(span);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'page-btn' + (p === page ? ' active' : '');
+      btn.textContent = p;
+      btn.onclick = () => { page = p; renderTable(); };
+      numEl.appendChild(btn);
+    }
+  });
+}
+
+function paginationRange(current, total) {
+  if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+  if (current <= 4) return [1,2,3,4,5,'…',total];
+  if (current >= total - 3) return [1,'…',total-4,total-3,total-2,total-1,total];
+  return [1,'…',current-1,current,current+1,'…',total];
+}
+
+function changePage(dir) {
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  page = Math.max(1, Math.min(totalPages, page + dir));
+  renderTable();
+}
+
+// ════════════════════════════════════════════════
+// LÓGICA DO SIMULADOR DE CORTES (Isolado)
+// ════════════════════════════════════════════════
+var CORES=["#1932C8","#00C85A","#f97316","#a855f7","#ec4899","#06b6d4","#eab308","#ef4444","#84cc16","#f43f5e","#0ea5e9","#d946ef","#10b981","#fb923c","#6366f1"];
+var PH=["HFSX","HFDX","HFTX"];
+function isPH(d){return PH.some(function(p){return String(d).toUpperCase().indexOf(p)>=0;});}
+var DTS={},ALLDTS=[];
+
+function nf(v){try{return parseFloat(String(v).replace(",","."))||0;}catch(e){return 0;}}
+function no(s){return String(s||"").trim().toLowerCase().replace(/\s+/g," ");}
+
+function updV(){
+  var v=nf(document.getElementById("vC").value)*nf(document.getElementById("vL").value)*nf(document.getElementById("vA").value);
+  document.getElementById("vvol").textContent=v>0?v.toFixed(2)+" m3":"--";
+}
+updV();
+
+// ════════════════════════════════════════════════
+// INTEGRAÇÃO DE FROTA (Mock SAP)
+// ════════════════════════════════════════════════
+
+// Banco de dados temporário para simular o retorno do SAP
+// Adicione aqui as placas e dimensões mais comuns da sua operação
+const FROTA_SAP = {
+  "ABC1234": { tipo: "Carreta 3 Eixos", comp: 14.8, larg: 2.6, alt: 2.8 },
+  "XYZ9876": { tipo: "Truck Padrão", comp: 7.5, larg: 2.4, alt: 2.5 },
+  "VUC0001": { tipo: "VUC Urbano", comp: 4.5, larg: 2.2, alt: 2.2 },
+  "ROMANIX": { tipo: "Carreta LS", comp: 15.0, larg: 2.5, alt: 2.7 }
+};
+
+async function buscarPlaca(event) {
+  if (event) event.preventDefault();
+
+  const inputPlaca = document.getElementById("vPlaca");
+  const placa = inputPlaca ? inputPlaca.value.toUpperCase().replace(/[^A-Z0-9]/g, "") : "";
+  
+  if (!placa) { 
+    alert("Por favor, digite a placa do caminhão."); 
+    return; 
+  }
+
+  const btn = document.querySelector("button[onclick*='buscarPlaca']");
+  if (btn) {
+    btn.innerHTML = "⏳ BUSCANDO NO SAP...";
+    btn.style.background = "#f97316";
+  }
+
+  try {
+    // Chama o .exe que está a rodar no computador da própria pessoa
+    const resposta = await fetch(`http://localhost:5000/buscar?placa=${placa}`);
+    const dados = await resposta.json();
+
+    if (dados.erro) throw new Error(dados.erro);
+
+    // Preenche as dimensões
+    if (document.getElementById('vC')) document.getElementById('vC').value = dados.comprimento.replace(/\./g, '').replace(',', '.');
+    if (document.getElementById('vT')) document.getElementById('vT').value = dados.tipo;
+    if (document.getElementById('vA')) document.getElementById('vA').value = dados.altura.replace(/\./g, '').replace(',', '.');
+    if (document.getElementById('vL')) document.getElementById('vL').value = dados.largura.replace(/\./g, '').replace(',', '.');
+    
+    if (typeof updV === 'function') updV();
+
+  } catch (err) {
+    alert("Erro ao consultar o SAP: " + err.message);
+  } finally {
+    if (btn) {
+      btn.innerHTML = "🔍 BUSCAR";
+      btn.style.background = "#00C85A";
+    }
+  }
+}
+
+function simTrocarAba(id){
+  var ids=["veic","dt","res"];
+  document.querySelectorAll(".sim-tab").forEach(function(t,i){t.classList.toggle("on",ids[i]===id);});
+  document.querySelectorAll(".sim-pane").forEach(function(p){p.classList.remove("on");});
+  document.getElementById("pane-"+id).classList.add("on");
+}
+
+function simLoadFile(inp){
+  var file=inp.files[0]; if(!file) return;
+  var st=document.getElementById("st");
+  st.textContent="Lendo...";
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:"array"});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      processarSim(rows);
+    }catch(err){
+      st.textContent="Erro ao ler: "+err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function processarSim(rows){
+  var st=document.getElementById("st");
+  if(!rows||!rows.length){st.textContent="Vazio";return;}
+  var keys=Object.keys(rows[0]);
+  function fc(){
+    var cands=Array.prototype.slice.call(arguments);
+    return keys.find(function(k){return cands.some(function(c){return no(k).indexOf(c)>=0;});});
+  }
+  var cDT=fc("transport","nr remess","transp","transporte","nr.transp");
+  var cMat=fc("material");
+  var cVol=fc("volume acumulado","vol acum","volume");
+  var cQtd=fc("qtde remessa","qtd remessa","qtde","quantidade remessa");
+  var cDen=fc("denomina","descri","denominacao","desc");
+  if(!cDT||!cMat){
+    st.textContent="Colunas não achadas. Vi: "+keys.slice(0,6).join(" | ");
+    return;
+  }
+  DTS={};
+  rows.forEach(function(r){
+    var dt=String(r[cDT]||"").trim();
+    var mat=String(r[cMat]||"").trim();
+    var den=cDen?String(r[cDen]||"").trim():"";
+    var vol=cVol?nf(r[cVol]):0;
+    var qtd=cQtd?nf(r[cQtd]):1;
+    if(!dt||!mat) return;
+    if(!DTS[dt]) DTS[dt]=[];
+    var ex=DTS[dt].find(function(x){return x.mat===mat;});
+    if(ex){ex.qtd+=qtd;ex.vol+=vol;}
+    else DTS[dt].push({mat:mat,den:den,qtd:qtd,vol:vol});
+  });
+  ALLDTS=Object.keys(DTS).sort();
+  st.textContent=rows.length+" linhas | "+ALLDTS.length+" DTs carregadas";
+  renderDTL(ALLDTS);
+}
+
+function renderDTL(dts){
+  var el=document.getElementById("dtl");
+  el.innerHTML=dts.map(function(dt){
+    var it=DTS[dt]||[];
+    var cx=it.reduce(function(s,i){return s+i.qtd;},0);
+    var vt=it.reduce(function(s,i){return s+i.vol;},0);
+    return "<label class='sim-dti' onclick='selDT(\""+dt+"\",this)'>"
+      +"<input type='radio' name='dtr' value='"+dt+"'>"
+      +"<div style='flex:1'><div class='sim-dtn'>"+dt+"</div>"
+      +"<div class='sim-dti2'>"+it.length+" SKUs | "+Math.round(cx)+" cx | "+vt.toFixed(1)+" m3</div></div>"
+      +"<button class='sim-sbtn' onclick='event.stopPropagation();selDT(\""+dt+"\",this.closest(\".sim-dti\"));simular()'>► SIMULAR</button>"
+      +"</label>";
+  }).join("");
+  document.getElementById("dtw").style.display="flex";
+}
+
+function filtrarDT(t){renderDTL(ALLDTS.filter(function(d){return d.indexOf(t.trim())>=0;}));}
+
+function selDT(dt,el){
+  document.querySelectorAll(".sim-dti").forEach(function(i){i.classList.remove("on");});
+  el.classList.add("on");
+  el.querySelector("input[type=radio]").checked=true;
+  document.getElementById("dtsi").textContent="DT "+dt+" selecionada";
+}
+
+function simular(){
+  var radio=document.querySelector("#dtl input[type=radio]:checked");
+  if(!radio){alert("Selecione uma DT");simTrocarAba("dt");return;}
+  var dtSel=radio.value;
+  var vC=nf(document.getElementById("vC").value);
+  var vL=nf(document.getElementById("vL").value);
+  var vA=nf(document.getElementById("vA").value);
+  var itens=(DTS[dtSel]||[]).filter(function(i){return i.qtd>0&&i.vol>0;});
+  if(!itens.length){alert("DT sem dados de volume.");return;}
+
+  var skus=itens.map(function(item,idx){
+    var volUnit=item.vol/item.qtd;
+    var lado=Math.cbrt(volUnit);
+    lado=Math.min(lado, vL*0.98, vA*0.98, vC*0.5);
+    lado=Math.max(lado, 0.05);
+    var nW=Math.max(1,Math.floor((vL+0.001)/lado));
+    var nH=Math.max(1,Math.floor((vA+0.001)/lado));
+    return {mat:item.mat,den:item.den,qtd:item.qtd,vol:item.vol,
+            volUnit:volUnit,w:lado,h:lado,d:lado,nW:nW,nH:nH,
+            cor:CORES[idx%CORES.length],nome:item.den||item.mat,
+            ph:isPH(item.den||item.mat)};
+  });
+
+  var nph=skus.filter(function(s){return !s.ph;}).sort(function(a,b){return a.vol-b.vol;});
+  var ph=skus.filter(function(s){return s.ph;}).sort(function(a,b){return a.vol-b.vol;});
+  skus=nph.concat(ph);
+  skus.forEach(function(s,i){s.cor=CORES[i%CORES.length];});
+
+  var volTotal=skus.reduce(function(s,k){return s+k.vol;},0);
+  var volVeic=vC*vL*vA;
+  var pct=volTotal/volVeic;
+  var cxTotal=skus.reduce(function(s,k){return s+k.qtd;},0);
+
+  var boxes=[];
+  var cx=0,cy=0,cz=0,maxH=0,maxD=0;
+  skus.forEach(function(s){
+    var rest=Math.ceil(s.qtd);
+    while(rest>0){
+      if(cx+s.w>vL+0.001){cx=0;cy+=maxH;maxH=0;}
+      if(cy+s.h>vA+0.001){cx=0;cy=0;maxH=0;cz+=maxD;maxD=0;}
+      if(cz+s.d>vC+0.001) break;
+      boxes.push({x:cx+s.w/2,y:cy+s.h/2,z:cz+s.d/2,w:s.w,h:s.h,d:s.d,cor:s.cor,nome:s.nome});
+      maxH=Math.max(maxH,s.h);
+      maxD=Math.max(maxD,s.d);
+      cx+=s.w;
+      rest--;
+    }
+  });
+
+  var fardosNoBox=boxes.length;
+  var fardosCortados=Math.max(0,Math.round(cxTotal)-fardosNoBox);
+  var volCortado=fardosCortados>0 ? volTotal*(fardosCortados/cxTotal) : 0;
+
+  var cor=pct>1?"sim-err":pct>0.85?"sim-warn":"sim-ok";
+  var res=pct>1?"NÃO CABE":pct>0.85?"MUITO CHEIO":"CABE";
+  document.getElementById("rc").innerHTML=
+    "<div class='sim-row'><span class='k'>DT simulada</span><span class='v'>"+dtSel+"</span></div>"
+    +"<div class='sim-row'><span class='k'>Total SKUs</span><span class='v'>"+skus.length+"</span></div>"
+    +"<div class='sim-row'><span class='k'>Total fardos</span><span class='v'>"+Math.round(cxTotal)+"</span></div>"
+    +"<div class='sim-row'><span class='k'>Volume total DT</span><span class='v'>"+volTotal.toFixed(2)+" m3</span></div>"
+    +"<div class='sim-row'><span class='k'>Volume veículo</span><span class='v'>"+volVeic.toFixed(2)+" m3</span></div>"
+    +"<div class='sim-row'><span class='k'>% Ocupação</span><span class='v "+cor+"'>"+(pct*100).toFixed(1)+"%</span></div>"
+    +"<div class='sim-row'><span class='k'>Resultado</span><span class='v "+cor+"'>"+res+"</span></div>"
+    +(fardosCortados>0
+      ? "<div class='sim-row'><span class='k' style='color:#ef4444'>Fardos cortados</span><span class='v sim-err'>"+fardosCortados+"</span></div>"
+        +"<div class='sim-row'><span class='k' style='color:#ef4444'>Volume cortado</span><span class='v sim-err'>"+volCortado.toFixed(2)+" m3</span></div>"
+      : "<div class='sim-row'><span class='k'>Fardos cortados</span><span class='v sim-ok'>0</span></div>")
+    +"<div class='sim-bar'><div class='sim-barfill' style='width:"+Math.min(pct*100,100)+"%;background:"+(pct>1?"#ef4444":pct>0.85?"#f97316":"#00C85A")+"'></div></div>";
+
+  document.getElementById("ol").innerHTML=skus.map(function(s,i){
+    return "<div class='sim-oi'>"
+      +"<div class='sim-on2'>"+(i+1)+"</div>"
+      +"<div style='width:10px;height:10px;min-width:10px;border-radius:2px;background:"+s.cor+";margin-top:2px'></div>"
+      +"<div style='flex:1;line-height:1.4'>"
+      +"<div style='font-size:10px'>"+s.nome+(s.ph?"<span class='sim-tagph'>PH</span>":"")+"</div>"
+      +"<div style='font-size:9px;color:#64748b;font-family:Consolas,monospace'>"+Math.round(s.qtd)+" fardos | "+s.vol.toFixed(2)+" m3</div>"
+      +"</div></div>";
+  }).join("");
+
+  desenhar3D(boxes,vC,vL,vA,skus);
+  simTrocarAba("res");
+}
+
+var CAM={rx:0.5,ry:-0.6,zoom:1,px:0,py:0};
+var BXS=[],DV={};
+var drag3d=false,rgt3d=false,lx3d=0,ly3d=0;
+
+function desenhar3D(boxes,comp,larg,alt,skus){
+  document.getElementById("ecv").style.display="none";
+  document.getElementById("c3d").style.display="block";
+  document.getElementById("hnt3d").style.display="block";
+  document.getElementById("ctr3d").style.display="flex";
+  document.getElementById("leg3d").style.display="block";
+  BXS=boxes; DV={comp:comp,larg:larg,alt:alt};
+  var lm={};
+  skus.forEach(function(s){lm[s.nome]=s.cor;});
+  document.getElementById("lgi").innerHTML=Object.keys(lm).map(function(n){
+    return "<div class='sim-legitem'><div style='background:"+lm[n]+";width:10px;height:10px;min-width:10px;border-radius:2px'></div>"
+      +"<div style='font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px'>"+n+"</div></div>";
+  }).join("");
+  draw3d();
+}
+
+function proj3d(x,y,z){
+  var ry=CAM.ry,rx=CAM.rx;
+  var x1=x*Math.cos(ry)+z*Math.sin(ry);
+  var z1=-x*Math.sin(ry)+z*Math.cos(ry);
+  var y2=y*Math.cos(rx)-z1*Math.sin(rx);
+  var z2=y*Math.sin(rx)+z1*Math.cos(rx);
+  var sc=400*CAM.zoom/(8+z2);
+  var W=document.getElementById("cvwrap").clientWidth;
+  var H=document.getElementById("cvwrap").clientHeight;
+  return{px:W/2+x1*sc+CAM.px, py:H/2-y2*sc+CAM.py};
+}
+
+function face3d(ctx,pts,fill,stk){
+  ctx.beginPath();ctx.moveTo(pts[0].px,pts[0].py);
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].px,pts[i].py);
+  ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stk;ctx.lineWidth=0.4;ctx.stroke();
+}
+
+function dk3d(hex,f){
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return "rgb("+Math.round(r*f)+","+Math.round(g*f)+","+Math.round(b*f)+")";
+}
+
+function draw3d(){
+  if(!document.getElementById("page-simulador").classList.contains('show')) return;
+  var wrap=document.getElementById("cvwrap");
+  var cv=document.getElementById("c3d");
+  var W=wrap.clientWidth,H=wrap.clientHeight;
+  cv.width=W; cv.height=H;
+  var ctx=cv.getContext("2d");
+  
+  // Verifica se o tema light está ativo
+  var isLight = document.body.classList.contains('light-theme');
+  var gr=ctx.createRadialGradient(W*.3,H*.3,0,W*.5,H*.5,W*.7);
+  
+  if(isLight) {
+    gr.addColorStop(0,"#ffffff"); gr.addColorStop(1,"#eef2ee"); // Fundo claro
+  } else {
+    gr.addColorStop(0,"#0d1a3a"); gr.addColorStop(1,"#050a14"); // Fundo escuro
+  }
+  
+  ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
+  var C=DV.comp,L=DV.larg,A=DV.alt;
+  var ocx=C/2,ocy=A/2,ocz=L/2;
+  
+  // Cor da grade (grid)
+  ctx.strokeStyle = isLight ? "rgba(200,216,200,0.8)" : "rgba(31,45,74,0.5)"; 
+  ctx.lineWidth=0.5;
+  for(var i=0;i<=10;i++){
+    var p1=proj3d(i/10*C-ocx,-ocy,-ocz),p2=proj3d(i/10*C-ocx,-ocy,L-ocz);
+    ctx.beginPath();ctx.moveTo(p1.px,p1.py);ctx.lineTo(p2.px,p2.py);ctx.stroke();
+    var p3=proj3d(-ocx,-ocy,i/10*L-ocz),p4=proj3d(C-ocx,-ocy,i/10*L-ocz);
+    ctx.beginPath();ctx.moveTo(p3.px,p3.py);ctx.lineTo(p4.px,p4.py);ctx.stroke();
+  }
+  var co=[[0,0,0],[C,0,0],[C,A,0],[0,A,0],[0,0,L],[C,0,L],[C,A,L],[0,A,L]].map(function(p){
+    return proj3d(p[0]-ocx,p[1]-ocy,p[2]-ocz);
+  });
+  
+  // Cor da estrutura do baú
+  ctx.strokeStyle= isLight ? "rgba(10,122,0,0.8)" : "rgba(25,50,200,0.8)"; 
+  ctx.lineWidth=1.5;
+  [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(function(e){
+    ctx.beginPath();ctx.moveTo(co[e[0]].px,co[e[0]].py);ctx.lineTo(co[e[1]].px,co[e[1]].py);ctx.stroke();
+  });
+  BXS.map(function(b){
+    return {b:b, depth:proj3d(b.z-ocx,b.y-ocy,b.x-ocz).py};
+  }).sort(function(a,b){return b.depth-a.depth;}).forEach(function(item){
+    var b=item.b;
+    var x0=b.z-ocx,y0=b.y-ocy,z0=b.x-ocz,w=b.d,h=b.h,d=b.w;
+    var P={
+      A:proj3d(x0,y0,z0),      B:proj3d(x0+w,y0,z0),
+      C:proj3d(x0+w,y0+h,z0),  D:proj3d(x0,y0+h,z0),
+      E:proj3d(x0,y0,z0+d),    F:proj3d(x0+w,y0,z0+d),
+      G:proj3d(x0+w,y0+h,z0+d),H:proj3d(x0,y0+h,z0+d)
+    };
+    var c=b.cor;
+    face3d(ctx,[P.D,P.C,P.G,P.H],c+"cc",dk3d(c,0.3));
+    face3d(ctx,[P.E,P.F,P.G,P.H],dk3d(c,0.7)+"cc",dk3d(c,0.3));
+    face3d(ctx,[P.B,P.F,P.G,P.C],dk3d(c,0.5)+"cc",dk3d(c,0.3));
+  });
+}
+
+window.addEventListener("resize",function(){if(BXS.length)draw3d();});
+function camReset(){CAM={rx:0.5,ry:-0.6,zoom:1,px:0,py:0};draw3d();}
+function camLateral(){CAM.rx=0.05;CAM.ry=-Math.PI/2;CAM.px=0;CAM.py=0;draw3d();}
+function camTopo(){CAM.rx=Math.PI/2-0.05;CAM.ry=0;CAM.px=0;CAM.py=0;draw3d();}
+function camFrontal(){CAM.rx=0.05;CAM.ry=0;CAM.px=0;CAM.py=0;draw3d();}
+
+var cw3=document.getElementById("cvwrap");
+cw3.addEventListener("mousedown",function(e){drag3d=true;rgt3d=e.button===2;lx3d=e.clientX;ly3d=e.clientY;});
+cw3.addEventListener("contextmenu",function(e){e.preventDefault();});
+cw3.addEventListener("mouseup",function(){drag3d=false;});
+cw3.addEventListener("mousemove",function(e){
+  if(!drag3d||!BXS.length) return;
+  var dx=(e.clientX-lx3d)*0.005,dy=(e.clientY-ly3d)*0.005;
+  if(rgt3d){CAM.px+=dx*80;CAM.py+=dy*80;}
+  else{CAM.ry+=dx;CAM.rx=Math.max(-Math.PI/2+0.05,Math.min(Math.PI/2-0.05,CAM.rx+dy));}
+  lx3d=e.clientX;ly3d=e.clientY;draw3d();
+});
+cw3.addEventListener("wheel",function(e){CAM.zoom=Math.max(0.2,Math.min(6,CAM.zoom-e.deltaY*0.001));draw3d();},{passive:true});
+cw3.addEventListener("touchstart",function(e){drag3d=true;lx3d=e.touches[0].clientX;ly3d=e.touches[0].clientY;});
+cw3.addEventListener("touchend",function(){drag3d=false;});
+cw3.addEventListener("touchmove",function(e){
+  if(!drag3d||!BXS.length) return;
+  var dx=(e.touches[0].clientX-lx3d)*0.005,dy=(e.touches[0].clientY-ly3d)*0.005;
+  CAM.ry+=dx;CAM.rx=Math.max(-Math.PI/2+0.05,Math.min(Math.PI/2-0.05,CAM.rx+dy));
+  lx3d=e.touches[0].clientX;ly3d=e.touches[0].clientY;draw3d();
+});
+</script>
+<footer>
+  // Site atualizado por <span>Leandro Xavier da Silva</span>
+</footer>
+
+</body>
+</html>
