@@ -1447,6 +1447,47 @@
   body.light-theme .sim-hint3d { color: rgba(0,0,0,0.5); }
   body.light-theme .sim-emp { color: #5a7a5a; }
   body.light-theme #vT::placeholder { color: #a0a0a0; }
+
+  /* ── IMPRESSÃO PDF DO SIMULADOR ── */
+  #printArea { display: none; }
+  @page { size: A4 portrait; margin: 12mm; }
+  @media print {
+    body.printing-simulador html, body.printing-simulador body { height: auto !important; overflow: visible !important; display: block !important; background: #fff !important; }
+    body.printing-simulador header, body.printing-simulador .main, body.printing-simulador .tabs, body.printing-simulador #cursor-arrow { display: none !important; }
+    body.printing-simulador #printArea { display: block !important; }
+    body.printing-simulador * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  .pr { font-family: var(--ft); color: #1d2340; font-size: 10.5pt; font-variant-numeric: tabular-nums; }
+  .pr-top { background: #03267F; color: #fff; display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 4px solid #00C85A; }
+  .pr-top .logo { font-size: 26px; font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+  .pr-top h1 { font-family: var(--ftt); font-weight: 500; font-size: 17px; text-transform: lowercase; }
+  .pr-top .dt { margin-left: auto; text-align: right; font-size: 9pt; opacity: .85; line-height: 1.4; }
+  .pr-res { display: flex; align-items: center; gap: 14px; margin: 12px 0 8px; padding: 10px 14px; border-radius: 6px; background: #F5F5F3; border-left: 6px solid var(--c); }
+  .pr-res .big { font-size: 20pt; font-weight: 700; color: var(--c); }
+  .pr-res .lbl2 { font-size: 9pt; color: #6b6a63; }
+  .pr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; margin-bottom: 10px; }
+  .pr-grid div { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid #E1E0DA; font-size: 9.5pt; }
+  .pr-grid span:first-child { color: #6b6a63; white-space: nowrap; }
+  .pr-grid span:last-child { font-weight: 700; color: #03267F; text-align: right; }
+  .pr h2 { font-size: 9pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1932C8; margin: 12px 0 6px; }
+  .pr-img { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+  .pr-img figure { border: 1px solid #E1E0DA; border-radius: 4px; overflow: hidden; margin: 0; }
+  .pr-img img { width: 100%; display: block; object-fit: contain; background: #F5F5F3; }
+  .pr-img .fp { display: flex; flex-direction: column; }
+  .pr-img .fp img { flex: 1; min-height: 0; max-height: 78mm; }
+  .pr-img .col img { max-height: 36mm; }
+  .pr-img figcaption { font-size: 8pt; color: #6b6a63; padding: 3px 6px; background: #F5F5F3; }
+  .pr-img .col { display: flex; flex-direction: column; gap: 8px; }
+  .pr table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  .pr th { background: #03267F; color: #fff; text-align: left; padding: 5px 6px; font-weight: 700; font-size: 8.5pt; }
+  .pr td { padding: 4px 6px; border-bottom: 1px solid #E1E0DA; vertical-align: top; }
+  .pr tr { page-break-inside: avoid; break-inside: avoid; }
+  .pr td.n, .pr th.n { text-align: right; }
+  .pr .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
+  .pr .ph { background: rgba(200,95,15,.12); color: #C85F0F; font-size: 7.5pt; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
+  .pr-foot { margin-top: 14px; padding-top: 6px; border-top: 1px solid #E1E0DA; font-size: 8pt; color: #6b6a63; display: flex; justify-content: space-between; }
+  .pr-ass { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 34px; page-break-inside: avoid; break-inside: avoid; }
+  .pr-ass div { border-top: 1px solid #1d2340; padding-top: 4px; font-size: 8.5pt; color: #6b6a63; text-align: center; }
 </style>
 </head>
 <body>
@@ -1591,6 +1632,8 @@
         <div class="sim-tab" onclick="simTrocarAba('dt')">Base DT</div>
         <div class="sim-tab" onclick="simTrocarAba('res')">Resultado</div>
       </div>
+      
+      <!-- Aba Veículo -->
       <div class="sim-pane on" id="pane-veic">
         <div class="sim-lbl">Buscar Veículo no SAP</div>
         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
@@ -1606,34 +1649,48 @@
         </div>
         <div class="sim-card">
           <div class="sim-row"><span class="k">Volume do baú</span><span class="v" id="vvol">45.00 m3</span></div>
-          <div class="sim-row"><span class="k">Tipo</span><input type="text" id="vT" placeholder="Truck, Carreta..." style="width:150px;padding:2px 6px;font-size:11px;border:none;background:transparent;color:var(--sim-tx)"></div>
+          <div class="sim-row"><span class="k">Tipo</span><input type="text" id="vT" placeholder="Truck, Carreta..." style="width:150px;padding:2px 6px;font-size:11px;border:none;background:transparent;color:var(--text)"></div>
         </div>
         <button class="sim-btnvd" onclick="simular()">► SIMULAR CARGA</button>
         <div style="font-size:9px;color:#64748b;text-align:center;font-family:Consolas,monospace">Selecione a DT na aba Base DT antes de simular</div>
       </div>
+      
+      <!-- Aba Base DT (Novo) -->
       <div class="sim-pane" id="pane-dt">
-        <div class="sim-lbl">Upload da Base DT (ZLES002)</div>
+        <div class="sim-lbl">Upload da Base de Remessas</div>
         <label class="sim-up" for="fi">
           <input type="file" id="fi" accept=".xlsx,.xls,.csv" onchange="simLoadFile(this)">
           <div style="font-size:28px;margin-bottom:6px">📁</div>
           <div style="font-size:12px;font-weight:600;margin-bottom:4px">Clique para carregar</div>
-          <div style="font-size:10px;color:#64748b">Aceita .xlsx ou .csv da ZLES002<br>Colunas: Nr transporte - Material - Volume acumulado - Qtde Remessa</div>
+          <div style="font-size:10px;color:#64748b">Aceita .xlsx ou .csv (modelo Remessas / ZLES002)<br>A API fará o mapeamento inteligente das colunas.</div>
         </label>
         <div id="st" style="font-size:10px;color:#64748b;text-align:center;font-family:Consolas,monospace;min-height:16px"></div>
+        
         <div id="dtw" style="display:none;flex-direction:column;gap:8px">
-          <div class="sim-lbl">Selecionar DT</div>
-          <input type="text" id="dtf" placeholder="Filtrar por número..." oninput="filtrarDT(this.value)">
+          <div class="sim-lbl">Filtros</div>
+          <div class="sim-ig"><span>Data carregar</span><select id="fdt" onchange="aplicarFiltrosSim()"></select></div>
+          <div class="sim-ig"><span>Transportadora</span><select id="ftr" onchange="aplicarFiltrosSim()"></select></div>
+          
+          <div class="sim-lbl" style="margin-top:4px">Selecionar DT</div>
+          <input type="text" id="dtf" placeholder="DT, cliente, placa ou remessa..." oninput="aplicarFiltrosSim()">
           <div class="sim-dtlist" id="dtl"></div>
           <div id="dtsi" style="font-size:10px;color:#00C85A;font-family:Consolas,monospace;min-height:14px"></div>
         </div>
       </div>
+      
+      <!-- Aba Resultado (Novo com PDF) -->
       <div class="sim-pane" id="pane-res">
         <div class="sim-lbl">Resumo da Carga</div>
         <div class="sim-card" id="rc"><div class="sim-emp" style="height:80px"><div>Rode a simulação primeiro</div></div></div>
-        <div class="sim-lbl" style="margin-top:4px">Ordem de Carregamento</div>
+        
+        <button class="sim-btnvd" id="btnpdf" onclick="imprimirResultadoSim()" disabled style="background:transparent; border:1px solid #00e5ff; color:#00e5ff; margin-top:4px;">🖨 SALVAR PDF / IMPRIMIR</button>
+        
+        <div class="sim-lbl" style="margin-top:12px">Ordem de Carregamento</div>
         <div id="ol"><div style="font-size:10px;color:#64748b;padding:6px">Aguardando...</div></div>
       </div>
     </div>
+    
+    <!-- Canvas 3D -->
     <div class="sim-cv" id="cvwrap">
       <div class="sim-emp" id="ecv" style="height:100%">
         <div style="font-size:48px;opacity:.3">🚛</div>
@@ -1651,6 +1708,8 @@
     </div>
   </div>
 </div>
+<!-- Tela de Impressão PDF Oculta -->
+<div id="printArea"></div>
 
 <!-- Romaneio Modal -->
 <div id="romaneio-modal">
@@ -3313,15 +3372,34 @@ function changePage(dir) {
 }
 
 // ════════════════════════════════════════════════
-// LÓGICA DO SIMULADOR DE CORTES (Isolado)
+// LÓGICA DO SIMULADOR DE CORTES (COM NOVO MOTOR)
 // ════════════════════════════════════════════════
 var CORES=["#1932C8","#00C85A","#f97316","#a855f7","#ec4899","#06b6d4","#eab308","#ef4444","#84cc16","#f43f5e","#0ea5e9","#d946ef","#10b981","#fb923c","#6366f1"];
 var PH=["HFSX","HFDX","HFTX"];
 function isPH(d){return PH.some(function(p){return String(d).toUpperCase().indexOf(p)>=0;});}
-var DTS={},ALLDTS=[];
+var DTS={}, META={}, ALLDTS=[], SEL=null;
+var MAXLIST=300;
 
-function nf(v){try{return parseFloat(String(v).replace(",","."))||0;}catch(e){return 0;}}
-function no(s){return String(s||"").trim().toLowerCase().replace(/\s+/g," ");}
+function nf(v){
+  if(typeof v==="number") return v;
+  var s=String(v==null?"":v).trim();
+  if(!s) return 0;
+  if(s.indexOf(",")>=0) s=s.replace(/\./g,"").replace(",",".");
+  return parseFloat(s)||0;
+}
+function no(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/[º°ª]/g,"").replace(/\s+/g," ");}
+function escHtml(s) { return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+function fmtN(v,d){return Number(v).toLocaleString("pt-BR",{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+function fmtData(v){
+  if(v instanceof Date && !isNaN(v)){
+    var d=String(v.getDate()).padStart(2,"0"), m=String(v.getMonth()+1).padStart(2,"0");
+    return {txt:d+"/"+m+"/"+v.getFullYear(), key:v.getFullYear()+"-"+m+"-"+d};
+  }
+  var s=String(v||"").trim(); if(!s) return {txt:"",key:""};
+  var mm=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(mm){var dd=mm[1].padStart(2,"0"), mo=mm[2].padStart(2,"0"); return {txt:dd+"/"+mo+"/"+mm[3], key:mm[3]+"-"+mo+"-"+dd};}
+  return {txt:s,key:s};
+}
 
 function updV(){
   var v=nf(document.getElementById("vC").value)*nf(document.getElementById("vL").value)*nf(document.getElementById("vA").value);
@@ -3329,58 +3407,27 @@ function updV(){
 }
 updV();
 
-// ════════════════════════════════════════════════
-// INTEGRAÇÃO DE FROTA (Mock SAP)
-// ════════════════════════════════════════════════
-
-// Banco de dados temporário para simular o retorno do SAP
-// Adicione aqui as placas e dimensões mais comuns da sua operação
-const FROTA_SAP = {
-  "ABC1234": { tipo: "Carreta 3 Eixos", comp: 14.8, larg: 2.6, alt: 2.8 },
-  "XYZ9876": { tipo: "Truck Padrão", comp: 7.5, larg: 2.4, alt: 2.5 },
-  "VUC0001": { tipo: "VUC Urbano", comp: 4.5, larg: 2.2, alt: 2.2 },
-  "ROMANIX": { tipo: "Carreta LS", comp: 15.0, larg: 2.5, alt: 2.7 }
-};
-
+// ── Integração SAP Local ──
 async function buscarPlaca(event) {
   if (event) event.preventDefault();
-
   const inputPlaca = document.getElementById("vPlaca");
   const placa = inputPlaca ? inputPlaca.value.toUpperCase().replace(/[^A-Z0-9]/g, "") : "";
-  
-  if (!placa) { 
-    alert("Por favor, digite a placa do caminhão."); 
-    return; 
-  }
-
+  if (!placa) { alert("Por favor, digite a placa do caminhão."); return; }
   const btn = document.querySelector("button[onclick*='buscarPlaca']");
-  if (btn) {
-    btn.innerHTML = "⏳ BUSCANDO NO SAP...";
-    btn.style.background = "#f97316";
-  }
-
+  if (btn) { btn.innerHTML = "⏳ BUSCANDO NO SAP..."; btn.style.background = "#f97316"; }
   try {
-    // Chama o .exe que está a rodar no computador da própria pessoa
     const resposta = await fetch(`http://localhost:5000/buscar?placa=${placa}`);
     const dados = await resposta.json();
-
     if (dados.erro) throw new Error(dados.erro);
-
-    // Preenche as dimensões
     if (document.getElementById('vC')) document.getElementById('vC').value = dados.comprimento.replace(/\./g, '').replace(',', '.');
     if (document.getElementById('vT')) document.getElementById('vT').value = dados.tipo;
     if (document.getElementById('vA')) document.getElementById('vA').value = dados.altura.replace(/\./g, '').replace(',', '.');
     if (document.getElementById('vL')) document.getElementById('vL').value = dados.largura.replace(/\./g, '').replace(',', '.');
-    
-    if (typeof updV === 'function') updV();
-
+    updV();
   } catch (err) {
     alert("Erro ao consultar o SAP: " + err.message);
   } finally {
-    if (btn) {
-      btn.innerHTML = "🔍 BUSCAR";
-      btn.style.background = "#00C85A";
-    }
+    if (btn) { btn.innerHTML = "🔍 BUSCAR"; btn.style.background = "#00C85A"; }
   }
 }
 
@@ -3391,6 +3438,40 @@ function simTrocarAba(id){
   document.getElementById("pane-"+id).classList.add("on");
 }
 
+// ── Inteligência de Colunas ZLES002 ──
+var MAPA_SIM={
+  dt:  {ex:["n transporte","nr transporte","nr. transporte","no transporte","transporte","dt"],ct:["n transporte","nr transporte","nr.transp","no transporte"]},
+  mat: {ex:["material"],ct:["material"]},
+  den: {ex:["denominacao de item","denominacao","descricao"],ct:["denomina","descri"]},
+  vol: {ex:["volume acumulado","volume"],ct:["volume acum","vol acum","volume"]},
+  qtd: {ex:["qtde remessa","qtd remessa","quantidade remessa"],ct:["qtde remessa","qtd remessa","quantidade"]},
+  peso:{ex:["peso liquido","peso bruto","peso"],ct:["peso liq","peso"]},
+  rem: {ex:["nr. remessa/recebimento","nr remessa","remessa"],ct:["remessa/rec","nr. remessa","nr remessa"]},
+  cli: {ex:["nome cliente/fornecedor","cliente"],ct:["nome cliente","cliente"]},
+  tra: {ex:["nome transportadora","transportadora"],ct:["transportadora"]},
+  pla: {ex:["placa simples veiculo","placa"],ct:["placa"]},
+  mot: {ex:["nome motorista","motorista"],ct:["motorista"]},
+  dc:  {ex:["data carregar","data carregamento"],ct:["data carreg"]}
+};
+
+function mapearColunasSim(keys){
+  var nk=keys.map(no),col={},usadas={};
+  Object.keys(MAPA_SIM).forEach(function(c){
+    var m=MAPA_SIM[c],achou=null;
+    m.ex.some(function(x){var i=nk.indexOf(x);if(i>=0&&!usadas[i]){achou=i;return true;}});
+    if(achou===null) m.ct.some(function(x){
+      for(var i=0;i<nk.length;i++){
+        if(usadas[i]) continue;
+        if(c==="dt"&&nk[i].indexOf("transportadora")>=0) continue;
+        if(c==="vol"&&nk[i].indexOf("peso")>=0) continue;
+        if(nk[i].indexOf(x)>=0){achou=i;return true;}
+      }
+    });
+    if(achou!==null){col[c]=keys[achou];usadas[achou]=true;}
+  });
+  return col;
+}
+
 function simLoadFile(inp){
   var file=inp.files[0]; if(!file) return;
   var st=document.getElementById("st");
@@ -3398,95 +3479,152 @@ function simLoadFile(inp){
   var reader=new FileReader();
   reader.onload=function(e){
     try{
-      var wb=XLSX.read(e.target.result,{type:"array"});
-      var ws=wb.Sheets[wb.SheetNames[0]];
-      var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
-      processarSim(rows);
-    }catch(err){
-      st.textContent="Erro ao ler: "+err.message;
-    }
+      var wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
+      var escolhida=null;
+      for(var i=0;i<wb.SheetNames.length;i++){
+        var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[i]],{defval:""});
+        if(!rows.length) continue;
+        var col=mapearColunasSim(Object.keys(rows[0]));
+        if(col.dt&&col.mat&&col.vol&&col.qtd){escolhida={rows:rows,col:col};break;}
+        if(!escolhida) escolhida={rows:rows,col:col};
+      }
+      if(!escolhida){st.textContent="Planilha vazia";return;}
+      processarSimData(escolhida.rows,escolhida.col);
+    }catch(err){ st.textContent="Erro ao ler: "+err.message; }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function processarSim(rows){
+function processarSimData(rows,col){
   var st=document.getElementById("st");
-  if(!rows||!rows.length){st.textContent="Vazio";return;}
-  var keys=Object.keys(rows[0]);
-  function fc(){
-    var cands=Array.prototype.slice.call(arguments);
-    return keys.find(function(k){return cands.some(function(c){return no(k).indexOf(c)>=0;});});
-  }
-  var cDT=fc("transport","nr remess","transp","transporte","nr.transp");
-  var cMat=fc("material");
-  var cVol=fc("volume acumulado","vol acum","volume");
-  var cQtd=fc("qtde remessa","qtd remessa","qtde","quantidade remessa");
-  var cDen=fc("denomina","descri","denominacao","desc");
-  if(!cDT||!cMat){
-    st.textContent="Colunas não achadas. Vi: "+keys.slice(0,6).join(" | ");
+  var falta=["dt","mat","vol","qtd"].filter(function(c){return !col[c];});
+  if(falta.length){
+    st.innerHTML="<span style='color:#ef4444'>Faltam colunas: "+falta.join(", ")+"</span><br>Vi: "+escHtml(Object.keys(rows[0]).slice(0,8).join(" | "));
     return;
   }
-  DTS={};
+  DTS={}; META={}; SEL=null;
+  var semVol=0;
   rows.forEach(function(r){
-    var dt=String(r[cDT]||"").trim();
-    var mat=String(r[cMat]||"").trim();
-    var den=cDen?String(r[cDen]||"").trim():"";
-    var vol=cVol?nf(r[cVol]):0;
-    var qtd=cQtd?nf(r[cQtd]):1;
+    var dt=String(r[col.dt]==null?"":r[col.dt]).trim();
+    var mat=String(r[col.mat]==null?"":r[col.mat]).trim();
     if(!dt||!mat) return;
-    if(!DTS[dt]) DTS[dt]=[];
+    var den=col.den?String(r[col.den]||"").trim():"";
+    var vol=nf(r[col.vol]);
+    var qtd=nf(r[col.qtd]);
+    var peso=col.peso?nf(r[col.peso]):0;
+    if(vol<=0) semVol++;
+    
+    if(!DTS[dt]){
+      DTS[dt]=[];
+      META[dt]={cli:{},rem:{},tra:"",pla:"",mot:"",dc:{txt:"",key:""},peso:0,busca:""};
+    }
+    var m=META[dt];
+    m.peso+=peso;
+    if(col.cli&&r[col.cli]) m.cli[String(r[col.cli]).trim()]=1;
+    if(col.rem&&r[col.rem]) m.rem[String(r[col.rem]).trim()]=1;
+    if(col.tra&&!m.tra) m.tra=String(r[col.tra]||"").trim();
+    if(col.pla&&!m.pla) m.pla=String(r[col.pla]||"").trim();
+    if(col.mot&&!m.mot) m.mot=String(r[col.mot]||"").trim();
+    if(col.dc&&!m.dc.key) m.dc=fmtData(r[col.dc]);
+    
     var ex=DTS[dt].find(function(x){return x.mat===mat;});
-    if(ex){ex.qtd+=qtd;ex.vol+=vol;}
-    else DTS[dt].push({mat:mat,den:den,qtd:qtd,vol:vol});
+    if(ex){ex.qtd+=qtd;ex.vol+=vol;ex.peso+=peso;}
+    else DTS[dt].push({mat:mat,den:den,qtd:qtd,vol:vol,peso:peso});
   });
+  
   ALLDTS=Object.keys(DTS).sort();
-  st.textContent=rows.length+" linhas | "+ALLDTS.length+" DTs carregadas";
-  renderDTL(ALLDTS);
+  ALLDTS.forEach(function(dt){
+    var m=META[dt];
+    m.clis=Object.keys(m.cli); m.rems=Object.keys(m.rem);
+    m.busca=no([dt,m.clis.join(" "),m.rems.join(" "),m.pla,m.tra,m.mot].join(" "));
+    m.cx=DTS[dt].reduce(function(s,i){return s+i.qtd;},0);
+    m.vol=DTS[dt].reduce(function(s,i){return s+i.vol;},0);
+  });
+  
+  var datas={},trans={};
+  ALLDTS.forEach(function(dt){var m=META[dt];if(m.dc.key)datas[m.dc.key]=m.dc.txt;if(m.tra)trans[m.tra]=1;});
+  var dk=Object.keys(datas).sort().reverse();
+  document.getElementById("fdt").innerHTML="<option value=''>Todas as datas ("+dk.length+")</option>"
+    +dk.map(function(k){return "<option value='"+escHtml(k)+"'>"+escHtml(datas[k])+"</option>";}).join("");
+  var tk=Object.keys(trans).sort();
+  document.getElementById("ftr").innerHTML="<option value=''>Todas ("+tk.length+")</option>"
+    +tk.map(function(t){return "<option value='"+escHtml(t)+"'>"+escHtml(t)+"</option>";}).join("");
+    
+  document.getElementById("fdt").parentNode.style.display=dk.length?"flex":"none";
+  document.getElementById("ftr").parentNode.style.display=tk.length?"flex":"none";
+  document.getElementById("dtf").value="";
+  document.getElementById("dtsi").textContent="";
+  st.textContent=fmtN(rows.length)+" linhas | "+fmtN(ALLDTS.length)+" DTs carregadas"+(semVol?" | "+semVol+" s/ volume":"");
+  aplicarFiltrosSim();
+}
+
+function aplicarFiltrosSim(){
+  var fd=document.getElementById("fdt").value;
+  var ft=document.getElementById("ftr").value;
+  var tx=no(document.getElementById("dtf").value);
+  var lista=ALLDTS.filter(function(dt){
+    var m=META[dt];
+    if(fd&&m.dc.key!==fd) return false;
+    if(ft&&m.tra!==ft) return false;
+    if(tx&&m.busca.indexOf(tx)<0) return false;
+    return true;
+  });
+  lista.sort(function(a,b){var ka=META[a].dc.key,kb=META[b].dc.key;return ka<kb?1:ka>kb?-1:(a<b?1:-1);});
+  renderDTL(lista);
 }
 
 function renderDTL(dts){
   var el=document.getElementById("dtl");
-  el.innerHTML=dts.map(function(dt){
-    var it=DTS[dt]||[];
-    var cx=it.reduce(function(s,i){return s+i.qtd;},0);
-    var vt=it.reduce(function(s,i){return s+i.vol;},0);
-    return "<label class='sim-dti' onclick='selDT(\""+dt+"\",this)'>"
-      +"<input type='radio' name='dtr' value='"+dt+"'>"
-      +"<div style='flex:1'><div class='sim-dtn'>"+dt+"</div>"
-      +"<div class='sim-dti2'>"+it.length+" SKUs | "+Math.round(cx)+" cx | "+vt.toFixed(1)+" m3</div></div>"
-      +"<button class='sim-sbtn' onclick='event.stopPropagation();selDT(\""+dt+"\",this.closest(\".sim-dti\"));simular()'>► SIMULAR</button>"
+  var mostrar=dts.slice(0,MAXLIST);
+  el.innerHTML=(dts.length?"":"<div style='font-size:10px;color:#64748b;padding:6px'>Nenhuma DT com esses filtros</div>")
+   +mostrar.map(function(dt){
+    var it=DTS[dt]||[],m=META[dt];
+    var cli=m.clis.length>1?m.clis[0]+" +"+(m.clis.length-1):(m.clis[0]||"");
+    var sub=[m.dc.txt,m.tra,m.pla].filter(Boolean).join(" | ");
+    return "<label class='sim-dti"+(dt===SEL?" on":"")+"' data-dt='"+escHtml(dt)+"' onclick='selDTSim(this.dataset.dt,this)'>"
+      +"<input type='radio' name='dtr' value='"+escHtml(dt)+"'"+(dt===SEL?" checked":"")+">"
+      +"<div style='flex:1;min-width:0'><div class='sim-dtn'>"+escHtml(dt)+"</div>"
+      +"<div class='sim-dti2'>"+it.length+" SKUs | "+fmtN(m.cx)+" cx | "+m.vol.toFixed(1)+" m3"+(m.peso?" | "+fmtN(m.peso)+" kg":"")+"</div>"
+      +(cli?"<div style='font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' title='"+escHtml(m.clis.join("\n"))+"'>"+escHtml(cli)+"</div>":"")
+      +(sub?"<div style='font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>"+escHtml(sub)+"</div>":"")
+      +"</div>"
+      +"<button class='sim-sbtn' onclick='event.stopPropagation();var l=this.closest(\".sim-dti\");selDTSim(l.dataset.dt,l);simular()'>► SIMULAR</button>"
       +"</label>";
-  }).join("");
+  }).join("")
+   +(dts.length>MAXLIST?"<div style='font-size:9px;color:#64748b;padding:6px;text-align:center'>Mostrando "+MAXLIST+" de "+fmtN(dts.length)+" DTs.</div>":"");
   document.getElementById("dtw").style.display="flex";
 }
 
-function filtrarDT(t){renderDTL(ALLDTS.filter(function(d){return d.indexOf(t.trim())>=0;}));}
-
-function selDT(dt,el){
+function selDTSim(dt,el){
   document.querySelectorAll(".sim-dti").forEach(function(i){i.classList.remove("on");});
   el.classList.add("on");
   el.querySelector("input[type=radio]").checked=true;
+  SEL=dt;
   document.getElementById("dtsi").textContent="DT "+dt+" selecionada";
 }
 
 function simular(){
-  var radio=document.querySelector("#dtl input[type=radio]:checked");
-  if(!radio){alert("Selecione uma DT");simTrocarAba("dt");return;}
-  var dtSel=radio.value;
+  if(!SEL||!DTS[SEL]){alert("Selecione uma DT");simTrocarAba("dt");return;}
+  var dtSel=SEL;
+  var meta=META[dtSel]||{clis:[],rems:[]};
+
   var vC=nf(document.getElementById("vC").value);
   var vL=nf(document.getElementById("vL").value);
   var vA=nf(document.getElementById("vA").value);
   var itens=(DTS[dtSel]||[]).filter(function(i){return i.qtd>0&&i.vol>0;});
   if(!itens.length){alert("DT sem dados de volume.");return;}
 
+  var totUn=itens.reduce(function(s,i){return s+Math.ceil(i.qtd);},0);
+  var k=Math.max(1,Math.ceil(totUn/5000));
+
   var skus=itens.map(function(item,idx){
-    var volUnit=item.vol/item.qtd;
+    var volUnit=item.vol/item.qtd*k;
     var lado=Math.cbrt(volUnit);
     lado=Math.min(lado, vL*0.98, vA*0.98, vC*0.5);
     lado=Math.max(lado, 0.05);
     var nW=Math.max(1,Math.floor((vL+0.001)/lado));
     var nH=Math.max(1,Math.floor((vA+0.001)/lado));
-    return {mat:item.mat,den:item.den,qtd:item.qtd,vol:item.vol,
+    return {mat:item.mat,den:item.den,qtd:item.qtd,vol:item.vol,peso:item.peso||0,
             volUnit:volUnit,w:lado,h:lado,d:lado,nW:nW,nH:nH,
             cor:CORES[idx%CORES.length],nome:item.den||item.mat,
             ph:isPH(item.den||item.mat)};
@@ -3497,12 +3635,13 @@ function simular(){
   skus=nph.concat(ph);
   skus.forEach(function(s,i){s.cor=CORES[i%CORES.length];});
 
-  var volTotal=skus.reduce(function(s,k){return s+k.vol;},0);
+  var volTotal=skus.reduce(function(s,q){return s+q.vol;},0);
   var volVeic=vC*vL*vA;
   var pct=volTotal/volVeic;
-  var cxTotal=skus.reduce(function(s,k){return s+k.qtd;},0);
+  var cxTotal=skus.reduce(function(s,q){return s+q.qtd;},0);
+  var pesoTotal=itens.reduce(function(s,i){return s+(i.peso||0);},0);
 
-  var boxes=[];
+  var boxes=[],unCarregadas=0;
   var cx=0,cy=0,cz=0,maxH=0,maxD=0;
   skus.forEach(function(s){
     var rest=Math.ceil(s.qtd);
@@ -3514,45 +3653,161 @@ function simular(){
       maxH=Math.max(maxH,s.h);
       maxD=Math.max(maxD,s.d);
       cx+=s.w;
-      rest--;
+      unCarregadas+=Math.min(k,rest);
+      rest-=k;
     }
   });
 
-  var fardosNoBox=boxes.length;
+  var fardosNoBox=unCarregadas;
   var fardosCortados=Math.max(0,Math.round(cxTotal)-fardosNoBox);
   var volCortado=fardosCortados>0 ? volTotal*(fardosCortados/cxTotal) : 0;
 
-  var cor=pct>1?"sim-err":pct>0.85?"sim-warn":"sim-ok";
-  var res=pct>1?"NÃO CABE":pct>0.85?"MUITO CHEIO":"CABE";
+  var temCorte=fardosCortados>0||pct>1;
+  var cor=temCorte?"sim-err":pct>0.85?"sim-warn":"sim-ok";
+  var res=temCorte?"CORTE PREVISTO: "+fmtN(fardosCortados)+" fardos":pct>0.85?"MUITO CHEIO":"CABE";
+  var cliTxt=meta.clis.length?meta.clis.map(escHtml).join("<br>"):"";
+
   document.getElementById("rc").innerHTML=
-    "<div class='sim-row'><span class='k'>DT simulada</span><span class='v'>"+dtSel+"</span></div>"
+    "<div class='sim-row'><span class='k'>DT simulada</span><span class='v'>"+escHtml(dtSel)+"</span></div>"
+    +(meta.dc&&meta.dc.txt?"<div class='sim-row'><span class='k'>Data carregar</span><span class='v'>"+escHtml(meta.dc.txt)+"</span></div>":"")
+    +(meta.tra?"<div class='sim-row'><span class='k'>Transportadora</span><span class='v' style='font-size:10px;text-align:right;max-width:190px'>"+escHtml(meta.tra)+"</span></div>":"")
+    +(meta.pla||meta.mot?"<div class='sim-row'><span class='k'>Placa / Motorista</span><span class='v' style='font-size:10px;text-align:right;max-width:190px'>"+escHtml([meta.pla||"-",meta.mot].filter(Boolean).join(" / "))+"</span></div>":"")
+    +(cliTxt?"<div class='sim-row' style='align-items:flex-start'><span class='k'>Cliente</span><span class='v' style='font-size:9px;font-weight:400;text-align:right;max-width:200px;line-height:1.4'>"+cliTxt+"</span></div>":"")
     +"<div class='sim-row'><span class='k'>Total SKUs</span><span class='v'>"+skus.length+"</span></div>"
-    +"<div class='sim-row'><span class='k'>Total fardos</span><span class='v'>"+Math.round(cxTotal)+"</span></div>"
+    +"<div class='sim-row'><span class='k'>Total fardos</span><span class='v'>"+fmtN(cxTotal)+"</span></div>"
     +"<div class='sim-row'><span class='k'>Volume total DT</span><span class='v'>"+volTotal.toFixed(2)+" m3</span></div>"
     +"<div class='sim-row'><span class='k'>Volume veículo</span><span class='v'>"+volVeic.toFixed(2)+" m3</span></div>"
+    +(pesoTotal>0?"<div class='sim-row'><span class='k'>Peso líquido</span><span class='v'>"+fmtN(pesoTotal)+" kg</span></div>":"")
     +"<div class='sim-row'><span class='k'>% Ocupação</span><span class='v "+cor+"'>"+(pct*100).toFixed(1)+"%</span></div>"
     +"<div class='sim-row'><span class='k'>Resultado</span><span class='v "+cor+"'>"+res+"</span></div>"
     +(fardosCortados>0
       ? "<div class='sim-row'><span class='k' style='color:#ef4444'>Fardos cortados</span><span class='v sim-err'>"+fardosCortados+"</span></div>"
         +"<div class='sim-row'><span class='k' style='color:#ef4444'>Volume cortado</span><span class='v sim-err'>"+volCortado.toFixed(2)+" m3</span></div>"
       : "<div class='sim-row'><span class='k'>Fardos cortados</span><span class='v sim-ok'>0</span></div>")
-    +"<div class='sim-bar'><div class='sim-barfill' style='width:"+Math.min(pct*100,100)+"%;background:"+(pct>1?"#ef4444":pct>0.85?"#f97316":"#00C85A")+"'></div></div>";
+    +"<div class='sim-bar'><div class='sim-barfill' style='width:"+Math.min(pct*100,100)+"%;background:"+(pct>1?"#ef4444":pct>0.85?"#f97316":"#00C85A")+"'></div></div>"
+    +(k>1?"<div style='font-size:9px;color:#64748b;margin-top:6px'>Desenho agrupado: cada bloco = "+k+" unidades</div>":"");
 
   document.getElementById("ol").innerHTML=skus.map(function(s,i){
     return "<div class='sim-oi'>"
       +"<div class='sim-on2'>"+(i+1)+"</div>"
       +"<div style='width:10px;height:10px;min-width:10px;border-radius:2px;background:"+s.cor+";margin-top:2px'></div>"
       +"<div style='flex:1;line-height:1.4'>"
-      +"<div style='font-size:10px'>"+s.nome+(s.ph?"<span class='sim-tagph'>PH</span>":"")+"</div>"
-      +"<div style='font-size:9px;color:#64748b;font-family:Consolas,monospace'>"+Math.round(s.qtd)+" fardos | "+s.vol.toFixed(2)+" m3</div>"
+      +"<div style='font-size:10px'>"+escHtml(s.nome)+(s.ph?"<span class='sim-tagph'>PH</span>":"")+"</div>"
+      +"<div style='font-size:9px;color:#64748b;font-family:Consolas,monospace'>"+fmtN(s.qtd)+" fardos | "+s.vol.toFixed(2)+" m3"+(s.peso?" | "+fmtN(s.peso)+" kg":"")+"</div>"
       +"</div></div>";
   }).join("");
 
+  LAST={dt:dtSel,meta:meta,skus:skus,vC:vC,vL:vL,vA:vA,tipo:document.getElementById("vT").value.trim(),
+        volTotal:volTotal,volVeic:volVeic,pct:pct,cxTotal:cxTotal,pesoTotal:pesoTotal,res:res,cor:cor,
+        fardosCortados:fardosCortados,volCortado:volCortado,k:k};
+  
+  document.getElementById("btnpdf").disabled=false;
   desenhar3D(boxes,vC,vL,vA,skus);
   simTrocarAba("res");
 }
 
 var CAM={rx:0.5,ry:-0.6,zoom:1,px:0,py:0};
+var LAST=null;
+
+// ── Funções de PDF ──
+function capturarVista(cam){
+  var antes=JSON.parse(JSON.stringify(CAM));
+  if(cam) for(var key in cam) CAM[key]=cam[key];
+  var wrap=document.getElementById("cvwrap"),W=wrap.clientWidth,H=wrap.clientHeight;
+  var C=DV.comp,Lg=DV.larg,A=DV.alt;
+  function bbox(){
+    var xs=[],ys=[];
+    [[0,0,0],[C,0,0],[C,A,0],[0,A,0],[0,0,Lg],[C,0,Lg],[C,A,Lg],[0,A,Lg]].forEach(function(q){
+      var r=proj3d(q[0]-C/2,q[1]-A/2,q[2]-Lg/2);xs.push(r.px);ys.push(r.py);
+    });
+    return {x0:Math.min.apply(null,xs),x1:Math.max.apply(null,xs),y0:Math.min.apply(null,ys),y1:Math.max.apply(null,ys)};
+  }
+  CAM.px=0;CAM.py=0;CAM.zoom=1;
+  for(var it=0;it<3;it++){
+    var b=bbox(),f=Math.min(W*0.9/(b.x1-b.x0),H*0.9/(b.y1-b.y0));
+    CAM.zoom*=f;
+    b=bbox(); CAM.px+=W/2-(b.x0+b.x1)/2; CAM.py+=H/2-(b.y0+b.y1)/2;
+  }
+  draw3d();
+  var b=bbox(),mg=14;
+  var x0=Math.max(0,Math.floor(b.x0-mg)),y0=Math.max(0,Math.floor(b.y0-mg));
+  var w=Math.min(W,Math.ceil(b.x1+mg))-x0,h=Math.min(H,Math.ceil(b.y1+mg))-y0;
+  var out=document.createElement("canvas");out.width=w;out.height=h;
+  out.getContext("2d").drawImage(document.getElementById("c3d"),x0,y0,w,h,0,0,w,h);
+  var url=out.toDataURL("image/png");
+  CAM=antes; draw3d();
+  return url;
+}
+
+function imprimirResultadoSim(){
+  if(!LAST){alert("Rode a simulação primeiro");return;}
+  document.body.classList.add("printing-simulador");
+  
+  var L=LAST,m=L.meta||{clis:[],rems:[]};
+  var corHex={"sim-ok":"#00C85A","sim-warn":"#f97316","sim-err":"#ef4444"}[L.cor];
+  var agora=new Date();
+  var emissao=agora.toLocaleDateString("pt-BR")+" "+agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  
+  var imgPersp=capturarVista(null);
+  var imgLat=capturarVista({rx:0.02,ry:0});
+  var imgTopo=capturarVista({rx:Math.PI/2-0.02,ry:0});
+  
+  function li(k,v){return v===""||v==null?"":"<div><span>"+k+"</span><span>"+v+"</span></div>";}
+  var veic=fmtN(L.vC,2)+" x "+fmtN(L.vL,2)+" x "+fmtN(L.vA,2)+" m"+(L.tipo?" ("+escHtml(L.tipo)+")":"");
+  
+  var html="<div class='pr'>"
+   +"<div class='pr-top'><div class='logo'>ROMANIX</div>"
+   +"<div><h1>simulador de carga</h1><div style='font-size:8.5pt;opacity:.8'>UNBC &middot; Planejamento Logístico</div></div>"
+   +"<div class='dt'>DT <b style='font-size:13pt'>"+escHtml(L.dt)+"</b><br>Emitido em "+emissao+"</div></div>"
+   +"<div class='pr-res' style='--c:"+corHex+"'>"
+   +(L.fardosCortados>0||L.pct>1
+     ?"<div><div class='lbl2'>Corte previsto</div><div class='big'>"+fmtN(L.fardosCortados)+" fardos <span style='font-size:13pt;font-weight:500'>&middot; "+fmtN(L.volCortado,2)+" m&sup3;</span></div></div>"
+     :"<div><div class='lbl2'>Resultado</div><div class='big'>"+L.res+"</div></div>")
+   +"<div style='margin-left:auto;text-align:right'><div class='lbl2'>Ocupação (m³)</div><div class='big'>"+(L.pct*100).toFixed(1)+"%</div></div></div>"
+   +"<div class='pr-grid'>"
+   +li("Data carregar",m.dc&&m.dc.txt?escHtml(m.dc.txt):"")
+   +li("Transportadora",m.tra?escHtml(m.tra):"")
+   +li("Placa",m.pla?escHtml(m.pla):"")
+   +li("Motorista",m.mot?escHtml(m.mot):"")
+   +li("Remessas",m.rems.length?escHtml(m.rems.join(", ")):"")
+   +li("Cliente"+(m.clis.length>1?"s":""),m.clis.length?m.clis.map(escHtml).join("<br>"):"")
+   +li("Veículo (C x L x A)",veic)
+   +li("Volume veículo",fmtN(L.volVeic,2)+" m3")
+   +li("Volume total DT",fmtN(L.volTotal,2)+" m3")
+   +li("Total SKUs",L.skus.length)
+   +li("Total fardos",fmtN(L.cxTotal))
+   +li("Peso líquido",L.pesoTotal>0?fmtN(L.pesoTotal)+" kg":"")
+   +li("Fardos cortados",L.fardosCortados>0?"<span style='color:#B44B5A'>"+fmtN(L.fardosCortados)+"</span>":"0")
+   +li("Volume cortado",L.fardosCortados>0?"<span style='color:#B44B5A'>"+fmtN(L.volCortado,2)+" m3</span>":"")
+   +"</div>"
+   +"<h2>Estiva simulada</h2>"
+   +"<div class='pr-img'><figure class='fp'><img src='"+imgPersp+"'><figcaption>Perspectiva</figcaption></figure>"
+   +"<div class='col'><figure><img src='"+imgLat+"'><figcaption>Vista lateral</figcaption></figure>"
+   +"<figure><img src='"+imgTopo+"'><figcaption>Vista de topo</figcaption></figure></div></div>"
+   +(L.k>1?"<div style='font-size:8pt;color:#6b6a63;margin-top:4px'>Desenho agrupado: cada bloco = "+L.k+" unidades</div>":"")
+   +"<h2>Ordem de carregamento</h2>"
+   +"<table><thead><tr><th>#</th><th></th><th>Material</th><th>Descrição</th><th class='n'>Fardos</th><th class='n'>m³</th><th class='n'>kg</th></tr></thead><tbody>"
+   +L.skus.map(function(s,i){
+      return "<tr><td>"+(i+1)+"</td><td><span class='sw' style='background:"+s.cor+"'></span></td><td>"+escHtml(s.mat)+"</td>"
+       +"<td>"+escHtml(s.den||s.mat)+(s.ph?"<span class='ph'>PH</span>":"")+"</td>"
+       +"<td class='n'>"+fmtN(s.qtd)+"</td><td class='n'>"+fmtN(s.vol,2)+"</td><td class='n'>"+(s.peso?fmtN(s.peso):"-")+"</td></tr>";
+    }).join("")
+   +"<tr style='font-weight:700'><td colspan='4'>Total</td><td class='n'>"+fmtN(L.cxTotal)+"</td><td class='n'>"+fmtN(L.volTotal,2)+"</td><td class='n'>"+(L.pesoTotal?fmtN(L.pesoTotal):"-")+"</td></tr>"
+   +"</tbody></table>"
+   +"<div class='pr-ass'><div>Responsável pela simulação</div><div>Conferente / Expedição</div></div>"
+   +"<div class='pr-foot'><span>Suzano &middot; UNBC &middot; Simulador Romanix</span><span>Cubagem calculada por volume (m³)</span></div>"
+   +"</div>";
+   
+  document.getElementById("printArea").innerHTML=html;
+  var tituloAntes=document.title;
+  document.title="Simulacao_DT_"+L.dt;
+  var imgs=document.querySelectorAll("#printArea img"),faltam=imgs.length;
+  function go(){setTimeout(function(){window.print();document.title=tituloAntes; document.body.classList.remove("printing-simulador");},50);}
+  if(!faltam) return go();
+  imgs.forEach(function(im){if(im.complete){if(--faltam===0)go();}else im.onload=im.onerror=function(){if(--faltam===0)go();};});
+}
+
+// ── Desenho 3D (Preservando Dark/Light Theme) ──
 var BXS=[],DV={};
 var drag3d=false,rgt3d=false,lx3d=0,ly3d=0;
 
@@ -3567,7 +3822,7 @@ function desenhar3D(boxes,comp,larg,alt,skus){
   skus.forEach(function(s){lm[s.nome]=s.cor;});
   document.getElementById("lgi").innerHTML=Object.keys(lm).map(function(n){
     return "<div class='sim-legitem'><div style='background:"+lm[n]+";width:10px;height:10px;min-width:10px;border-radius:2px'></div>"
-      +"<div style='font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px'>"+n+"</div></div>";
+      +"<div style='font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px'>"+escHtml(n)+"</div></div>";
   }).join("");
   draw3d();
 }
@@ -3597,28 +3852,26 @@ function dk3d(hex,f){
 }
 
 function draw3d(){
-  if(!document.getElementById("page-simulador").classList.contains('show')) return;
+  if(!document.getElementById("page-simulador").classList.contains('show') && !document.body.classList.contains("printing-simulador")) return;
   var wrap=document.getElementById("cvwrap");
   var cv=document.getElementById("c3d");
   var W=wrap.clientWidth,H=wrap.clientHeight;
   cv.width=W; cv.height=H;
   var ctx=cv.getContext("2d");
   
-  // Verifica se o tema light está ativo
-  var isLight = document.body.classList.contains('light-theme');
+  var isLight = document.body.classList.contains('light-theme') || document.body.classList.contains('printing-simulador');
   var gr=ctx.createRadialGradient(W*.3,H*.3,0,W*.5,H*.5,W*.7);
   
   if(isLight) {
-    gr.addColorStop(0,"#ffffff"); gr.addColorStop(1,"#eef2ee"); // Fundo claro
+    gr.addColorStop(0,"#ffffff"); gr.addColorStop(1,"#eef2ee");
   } else {
-    gr.addColorStop(0,"#0d1a3a"); gr.addColorStop(1,"#050a14"); // Fundo escuro
+    gr.addColorStop(0,"#0d1a3a"); gr.addColorStop(1,"#050a14");
   }
   
   ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
   var C=DV.comp,L=DV.larg,A=DV.alt;
   var ocx=C/2,ocy=A/2,ocz=L/2;
   
-  // Cor da grade (grid)
   ctx.strokeStyle = isLight ? "rgba(200,216,200,0.8)" : "rgba(31,45,74,0.5)"; 
   ctx.lineWidth=0.5;
   for(var i=0;i<=10;i++){
@@ -3631,7 +3884,6 @@ function draw3d(){
     return proj3d(p[0]-ocx,p[1]-ocy,p[2]-ocz);
   });
   
-  // Cor da estrutura do baú
   ctx.strokeStyle= isLight ? "rgba(10,122,0,0.8)" : "rgba(25,50,200,0.8)"; 
   ctx.lineWidth=1.5;
   [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(function(e){
