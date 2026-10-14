@@ -1447,19 +1447,20 @@
   #page-simulador * { cursor: none; }
   #page-simulador input, #page-simulador select, #page-simulador .sim-up { cursor: default; }
   #page-simulador .sim-tab, #page-simulador .sim-btnvd, #page-simulador .sim-cbtn, #page-simulador .sim-dti, #page-simulador .sim-sbtn, #page-simulador .sim-btnpdf { cursor: none; }  
-  /* ── IMPRESSÃO PDF DO SIMULADOR ── */
+/* ── IMPRESSÃO PDF DO SIMULADOR ── */
   #printArea { display: none; }
   @page { size: A4 portrait; margin: 12mm; }
   @media print {
-    body.printing-simulador html, body.printing-simulador body { height: auto !important; overflow: visible !important; display: block !important; background: #fff !important; }
-    body.printing-simulador header, body.printing-simulador .main, body.printing-simulador .tabs, body.printing-simulador #cursor-arrow { display: none !important; }
+    body.printing-simulador, body.printing-simulador html { height: auto !important; overflow: visible !important; display: block !important; background: #fff !important; }
+    body.printing-simulador header, body.printing-simulador .sim-main, body.printing-simulador .tabs, body.printing-simulador #cursor-arrow, body.printing-simulador #cursor-canvas { display: none !important; }
     body.printing-simulador #printArea { display: block !important; }
     body.printing-simulador * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
-  .pr { font-family: var(--ft); color: #1d2340; font-size: 10.5pt; font-variant-numeric: tabular-nums; }
+  .pr { font-family: "Suzano Display", "Segoe UI", Arial, sans-serif; color: #1d2340; font-size: 10.5pt; font-variant-numeric: tabular-nums; }
   .pr-top { background: #03267F; color: #fff; display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 4px solid #00C85A; }
-  .pr-top .logo { font-size: 26px; font-family: "Suzano Unicase", monospace; font-weight: 700; }
-  .pr-top h1 { font-family: "Suzano Unicase", sans-serif; font-weight: 500; font-size: 17px; text-transform: lowercase; }
+  .pr-top .logo { font-size: 26px; font-family: "Suzano Unicase", "Suzano Display", sans-serif; font-weight: 700; text-shadow: none; letter-spacing: normal; text-transform: lowercase; }
+  .pr-top .sep { width: 1px; height: 30px; background: rgba(255,255,255,.3); }
+  .pr-top h1 { font-family: "Suzano Unicase", "Suzano Display", sans-serif; font-weight: 500; font-size: 17px; text-transform: lowercase; letter-spacing: -.01em; line-height: 1.1; margin: 0; text-shadow: none; }
   .pr-top .dt { margin-left: auto; text-align: right; font-size: 9pt; opacity: .85; line-height: 1.4; }
   .pr-res { display: flex; align-items: center; gap: 14px; margin: 12px 0 8px; padding: 10px 14px; border-radius: 6px; background: #F5F5F3; border-left: 6px solid var(--c); }
   .pr-res .big { font-size: 20pt; font-weight: 700; color: var(--c); }
@@ -1478,9 +1479,9 @@
   .pr-img figcaption { font-size: 8pt; color: #6b6a63; padding: 3px 6px; background: #F5F5F3; }
   .pr-img .col { display: flex; flex-direction: column; gap: 8px; }
   .pr table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-  .pr th { background: #03267F; color: #fff; text-align: left; padding: 5px 6px; font-weight: 700; font-size: 8.5pt; }
-  .pr td { padding: 4px 6px; border-bottom: 1px solid #E1E0DA; vertical-align: top; }
-  .pr tr { page-break-inside: avoid; break-inside: avoid; }
+  .pr th { background: #03267F; color: #fff; text-align: left; padding: 5px 6px; font-weight: 700; font-size: 8.5pt; text-shadow: none; letter-spacing: normal; text-transform: none; }
+  .pr td { padding: 4px 6px; border-bottom: 1px solid #E1E0DA; vertical-align: top; color: #1d2340; font-family: "Suzano Display", sans-serif; font-weight: 400; }
+  .pr tr { page-break-inside: avoid; break-inside: avoid; background: transparent; }
   .pr td.n, .pr th.n { text-align: right; }
   .pr .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
   .pr .ph { background: rgba(200,95,15,.12); color: #C85F0F; font-size: 7.5pt; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
@@ -3738,7 +3739,8 @@ function imprimirResultadoSim(){
   document.body.classList.add("printing-simulador");
   
   var L=LAST,m=L.meta||{clis:[],rems:[]};
-  var corHex={"sim-ok":"#00C85A","sim-warn":"#f97316","sim-err":"#ef4444"}[L.cor];
+  // Cores idênticas ao PDF original
+  var corHex={"sim-ok":"#007836","sim-warn":"#C85F0F","sim-err":"#B44B5A"}[L.cor];
   var agora=new Date();
   var emissao=agora.toLocaleDateString("pt-BR")+" "+agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
   
@@ -3750,8 +3752,8 @@ function imprimirResultadoSim(){
   var veic=fmtN(L.vC,2)+" x "+fmtN(L.vL,2)+" x "+fmtN(L.vA,2)+" m"+(L.tipo?" ("+escHtml(L.tipo)+")":"");
   
   var html="<div class='pr'>"
-   +"<div class='pr-top'><div class='logo'>ROMANIX</div>"
-   +"<div><h1>simulador de carga</h1><div style='font-size:8.5pt;opacity:.8'>UNBC &middot; Planejamento Logístico</div></div>"
+   +"<div class='pr-top'><div class='logo'>suzano</div><div class='sep'></div>"
+   +"<div><h1>simulador de carga</h1><div style='font-size:8.5pt;opacity:.8'>UNBC &middot; Planejamento de Estiva</div></div>"
    +"<div class='dt'>DT <b style='font-size:13pt'>"+escHtml(L.dt)+"</b><br>Emitido em "+emissao+"</div></div>"
    +"<div class='pr-res' style='--c:"+corHex+"'>"
    +(L.fardosCortados>0||L.pct>1
@@ -3789,7 +3791,7 @@ function imprimirResultadoSim(){
    +"<tr style='font-weight:700'><td colspan='4'>Total</td><td class='n'>"+fmtN(L.cxTotal)+"</td><td class='n'>"+fmtN(L.volTotal,2)+"</td><td class='n'>"+(L.pesoTotal?fmtN(L.pesoTotal):"-")+"</td></tr>"
    +"</tbody></table>"
    +"<div class='pr-ass'><div>Responsável pela simulação</div><div>Conferente / Expedição</div></div>"
-   +"<div class='pr-foot'><span>Suzano &middot; UNBC &middot; Simulador Romanix</span><span>Cubagem calculada por volume (m³)</span></div>"
+   +"<div class='pr-foot'><span>Suzano &middot; UNBC &middot; Simulador de Carga v6.5</span><span>Cubagem calculada por volume (m³)</span></div>"
    +"</div>";
    
   document.getElementById("printArea").innerHTML=html;
