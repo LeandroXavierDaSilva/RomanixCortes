@@ -1367,87 +1367,74 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-  /* ── Página Simulador de Cortes ── */
+ /* ── Página Simulador de Cortes (Design Original + Tema Romanix) ── */
   #page-simulador {
-    display: none; height: calc(100vh - 65px); background: #0a0f1e; color: #e2e8f0; font-family: Segoe UI, Arial, sans-serif;
+    display: none; height: calc(100vh - 65px);
+    background: var(--bg); color: var(--text);
+    font-family: "Suzano Display", "Segoe UI", Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
   }
   #page-simulador.show { display: flex; }
   .sim-main { display: flex; flex: 1; overflow: hidden; width: 100%; }
-  .sim-side { width: 370px; background: #111827; border-right: 1px solid #1f2d4a; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
-  .sim-tabs { display: flex; border-bottom: 1px solid #1f2d4a; }
-  .sim-tab { flex: 1; padding: 9px 4px; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; font-family: Consolas, monospace; transition: all .2s; }
-  .sim-tab.on { color: #00C85A; border-bottom-color: #00C85A; background: rgba(0,200,90,0.05); }
-  .sim-pane { display: none; flex: 1; overflow-y: auto; padding: 14px; flex-direction: column; gap: 10px; }
+  .sim-side { width: 380px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+  .sim-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .sim-tab { flex: 1; padding: 11px 4px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .5px; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; transition: all .2s; }
+  .sim-tab.on { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface2); }
+  .sim-pane { display: none; flex: 1; overflow-y: auto; padding: 16px; flex-direction: column; gap: 10px; }
   .sim-pane.on { display: flex; }
-  .sim-lbl { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #64748b; margin-bottom: 3px; font-family: Consolas, monospace; }
+  .sim-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
   .sim-g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
   .sim-ig { display: flex; flex-direction: column; gap: 3px; }
-  .sim-ig span { font-size: 9px; color: #64748b; font-family: Consolas, monospace; }
-  #page-simulador input[type=number], #page-simulador input[type=text] { background: #0d1526; border: 1px solid #1f2d4a; color: #e2e8f0; padding: 6px 8px; border-radius: 4px; font-size: 12px; font-family: Consolas, monospace; width: 100%; }
-  #page-simulador input:focus { outline: none; border-color: #1932C8; }
-  .sim-card { background: #0d1526; border: 1px solid #1f2d4a; border-radius: 6px; padding: 12px; }
-  .sim-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #1f2d4a; font-size: 11px; }
+  .sim-ig span { font-size: 11px; color: var(--muted); }
+  #page-simulador select, #page-simulador input[type=number], #page-simulador input[type=text] {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 7px 8px; border-radius: 4px; font-size: 13px; font-family: "Suzano Display", sans-serif; width: 100%;
+  }
+  #page-simulador input:focus, #page-simulador select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--surface2); }
+  .sim-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  .sim-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
   .sim-row:last-child { border-bottom: none; }
-  .sim-row .k { color: #64748b; }
-  .sim-row .v { font-family: Consolas, monospace; font-weight: 700; }
-  .sim-ok { color: #00C85A; } .sim-warn { color: #f97316; } .sim-err { color: #ef4444; }
-  .sim-bar { margin-top: 8px; background: #1a2540; border-radius: 4px; height: 8px; overflow: hidden; }
+  .sim-row .k { color: var(--muted); }
+  .sim-row .v { font-weight: 700; color: var(--accent); }
+  .sim-ok { color: var(--success) !important; } .sim-warn { color: #f97316 !important; } .sim-err { color: var(--danger) !important; }
+  .sim-bar { margin-top: 8px; background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
   .sim-barfill { height: 100%; border-radius: 4px; transition: width .5s; }
-  .sim-btnvd { padding: 9px 16px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: Consolas, monospace; width: 100%; background: #00C85A; color: #000; }
-  .sim-up { border: 2px dashed #1f2d4a; border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; background: #0d1526; display: block; }
-  .sim-up:hover { border-color: #1932C8; }
+  .sim-btnvd { padding: 11px 16px; border: none; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; cursor: pointer; font-family: "Suzano Display", sans-serif; width: 100%; background: var(--accent); color: #000; transition: 0.2s; }
+  .sim-btnvd:hover { opacity: 0.85; box-shadow: 0 0 12px rgba(57,255,20,0.4); }
+  .sim-up { border: 2px dashed var(--border); border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; background: var(--bg); display: block; transition: 0.2s; }
+  .sim-up:hover { border-color: var(--accent); background: var(--surface2); }
   .sim-up input { display: none; }
-  .sim-dtlist { display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto; }
-  .sim-dti { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d1526; border: 1px solid #1f2d4a; border-radius: 4px; cursor: pointer; }
-  .sim-dti:hover { border-color: #1932C8; }
-  .sim-dti.on { border-color: #00C85A; background: rgba(0,200,90,0.07); }
-  .sim-dti input { accent-color: #00C85A; width: 15px; height: 15px; cursor: pointer; }
-  .sim-dtn { font-family: Consolas, monospace; font-size: 12px; font-weight: 700; color: #1932C8; }
-  .sim-dti2 { font-size: 10px; color: #64748b; }
-  .sim-sbtn { margin-left: auto; background: #00C85A; color: #000; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 3px 9px; cursor: pointer; font-family: Consolas, monospace; opacity: 0; transition: opacity .2s; white-space: nowrap; }
+  .sim-dtlist { display: flex; flex-direction: column; gap: 4px; max-height: 420px; overflow-y: auto; }
+  .sim-dti { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: 0.2s; }
+  .sim-dti:hover { border-color: var(--accent); }
+  .sim-dti.on { border-color: var(--accent); background: var(--surface2); box-shadow: inset 3px 0 0 var(--accent); }
+  .sim-dti input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+  .sim-dtn { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .sim-dti2 { font-size: 11px; color: var(--text); }
+  .sim-dti3 { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px; }
+  .sim-sbtn { margin-left: auto; background: var(--accent); color: #000; border: none; border-radius: 3px; font-size: 10px; font-weight: 700; padding: 4px 9px; cursor: pointer; font-family: "Suzano Display", sans-serif; opacity: 0; transition: opacity .2s; white-space: nowrap; }
   .sim-dti.on .sim-sbtn { opacity: 1; }
-  .sim-oi { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #1f2d4a; }
-  .sim-on2 { width: 20px; height: 20px; min-width: 20px; border-radius: 50%; background: #1932C8; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; font-family: Consolas, monospace; }
-  .sim-tagph { background: #7c3a00; color: #fb923c; font-size: 9px; padding: 1px 5px; border-radius: 3px; font-family: Consolas, monospace; margin-left: 4px; }
-  .sim-cv { flex: 1; position: relative; overflow: hidden; background: #050a14; }
+  .sim-oi { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .sim-on2 { width: 22px; height: 22px; min-width: 22px; border-radius: 50%; background: var(--accent); color: #000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  .sim-tagph { background: var(--surface2); color: var(--danger); font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 4px; border: 1px solid var(--danger); }
+  .sim-cv { flex: 1; position: relative; overflow: hidden; background: var(--bg); }
   #page-simulador canvas { position: absolute; top: 0; left: 0; }
   .sim-ctrls { position: absolute; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; }
-  .sim-cbtn { background: rgba(25,50,200,0.8); border: 1px solid #1932C8; color: #fff; width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; user-select: none; }
-  .sim-cbtn:hover { background: #1932C8; }
-  .sim-hint3d { position: absolute; bottom: 16px; left: 16px; font-size: 10px; color: rgba(255,255,255,0.3); font-family: Consolas, monospace; line-height: 1.8; }
-  .sim-leg3d { position: absolute; top: 16px; right: 16px; background: rgba(10,15,30,0.92); border: 1px solid #1f2d4a; border-radius: 6px; padding: 10px; max-width: 220px; max-height: 55vh; overflow-y: auto; }
-  .sim-legtit { font-family: Consolas, monospace; font-size: 9px; letter-spacing: 2px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
-  .sim-legitem { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
-  .sim-emp { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: #64748b; font-family: Consolas, monospace; font-size: 12px; text-align: center; }
-
-  /* ── TEMA CLARO: Simulador de Cortes ── */
-  body.light-theme #page-simulador { background: #f4f6f4; color: #1a2e1a; }
-  body.light-theme .sim-side { background: #ffffff; border-right: 1px solid #c8d8c8; }
-  body.light-theme .sim-tabs { border-bottom: 1px solid #c8d8c8; }
-  body.light-theme .sim-tab { color: #5a7a5a; }
-  body.light-theme .sim-tab.on { color: #0a7a00; border-bottom-color: #0a7a00; background: rgba(10,122,0,0.05); }
-  body.light-theme .sim-lbl { color: #5a7a5a; }
-  body.light-theme #page-simulador input[type=number], 
-  body.light-theme #page-simulador input[type=text] { background: #ffffff; border: 1px solid #c8d8c8; color: #1a2e1a; }
-  body.light-theme #page-simulador input:focus { border-color: #0a7a00; }
-  body.light-theme .sim-card { background: #ffffff; border: 1px solid #c8d8c8; }
-  body.light-theme .sim-row { border-bottom: 1px solid #eef2ee; }
-  body.light-theme .sim-row .k { color: #5a7a5a; }
-  body.light-theme .sim-bar { background: #eef2ee; }
-  body.light-theme .sim-up { border: 2px dashed #c8d8c8; background: #ffffff; }
-  body.light-theme .sim-up:hover { border-color: #0a7a00; }
-  body.light-theme .sim-dti { background: #ffffff; border: 1px solid #c8d8c8; }
-  body.light-theme .sim-dti:hover { border-color: #0a7a00; }
-  body.light-theme .sim-dtn { color: #0a7a00; }
-  body.light-theme .sim-dti2 { color: #5a7a5a; }
-  body.light-theme .sim-cv { background: #eef2ee; }
-  body.light-theme .sim-oi { border-bottom: 1px solid #eef2ee; }
-  body.light-theme .sim-leg3d { background: rgba(255,255,255,0.92); border: 1px solid #c8d8c8; color: #1a2e1a; }
-  body.light-theme .sim-legtit { color: #5a7a5a; }
-  body.light-theme .sim-hint3d { color: rgba(0,0,0,0.5); }
-  body.light-theme .sim-emp { color: #5a7a5a; }
-  body.light-theme #vT::placeholder { color: #a0a0a0; }
-
+  .sim-cbtn { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; user-select: none; transition: 0.2s; }
+  .sim-cbtn:hover { border-color: var(--accent); color: var(--accent); }
+  .sim-hint3d { position: absolute; bottom: 16px; left: 16px; font-size: 11px; color: var(--muted); line-height: 1.8; }
+  .sim-leg3d { position: absolute; top: 16px; right: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; max-width: 240px; max-height: 55vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .sim-legtit { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
+  .sim-legitem { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 9px; color: var(--text); }
+  .sim-emp { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--muted); font-size: 14px; text-align: center; line-height: 1.7; }
+  .sim-btnpdf { padding: 10px 16px; border: 1.5px solid var(--accent); border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: "Suzano Display", sans-serif; width: 100%; background: transparent; color: var(--accent); margin-top: 4px; transition: 0.2s; }
+  .sim-btnpdf:hover:not(:disabled) { background: var(--accent); color: #000; box-shadow: 0 0 12px rgba(57,255,20,0.4); }
+  .sim-btnpdf:disabled { opacity: .4; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
+  
+  /* Desativa cursor neon no simulador mas mantém nos inputs */
+  #page-simulador * { cursor: none; }
+  #page-simulador input, #page-simulador select, #page-simulador .sim-up { cursor: default; }
+  #page-simulador .sim-tab, #page-simulador .sim-btnvd, #page-simulador .sim-cbtn, #page-simulador .sim-dti, #page-simulador .sim-sbtn, #page-simulador .sim-btnpdf { cursor: none; }
+  
   /* ── IMPRESSÃO PDF DO SIMULADOR ── */
   #printArea { display: none; }
   @page { size: A4 portrait; margin: 12mm; }
@@ -1459,8 +1446,8 @@
   }
   .pr { font-family: var(--ft); color: #1d2340; font-size: 10.5pt; font-variant-numeric: tabular-nums; }
   .pr-top { background: #03267F; color: #fff; display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 4px solid #00C85A; }
-  .pr-top .logo { font-size: 26px; font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
-  .pr-top h1 { font-family: var(--ftt); font-weight: 500; font-size: 17px; text-transform: lowercase; }
+  .pr-top .logo { font-size: 26px; font-family: "Suzano Unicase", monospace; font-weight: 700; }
+  .pr-top h1 { font-family: "Suzano Unicase", sans-serif; font-weight: 500; font-size: 17px; text-transform: lowercase; }
   .pr-top .dt { margin-left: auto; text-align: right; font-size: 9pt; opacity: .85; line-height: 1.4; }
   .pr-res { display: flex; align-items: center; gap: 14px; margin: 12px 0 8px; padding: 10px 14px; border-radius: 6px; background: #F5F5F3; border-left: 6px solid var(--c); }
   .pr-res .big { font-size: 20pt; font-weight: 700; color: var(--c); }
@@ -1633,7 +1620,6 @@
         <div class="sim-tab" onclick="simTrocarAba('res')">Resultado</div>
       </div>
       
-      <!-- Aba Veículo -->
       <div class="sim-pane on" id="pane-veic">
         <div class="sim-lbl">Buscar Veículo no SAP</div>
         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
@@ -1652,19 +1638,18 @@
           <div class="sim-row"><span class="k">Tipo</span><input type="text" id="vT" placeholder="Truck, Carreta..." style="width:150px;padding:2px 6px;font-size:11px;border:none;background:transparent;color:var(--text)"></div>
         </div>
         <button class="sim-btnvd" onclick="simular()">► SIMULAR CARGA</button>
-        <div style="font-size:9px;color:#64748b;text-align:center;font-family:Consolas,monospace">Selecione a DT na aba Base DT antes de simular</div>
+        <div style="font-size:9px;color:var(--muted);text-align:center;">Selecione a DT na aba Base DT antes de simular</div>
       </div>
       
-      <!-- Aba Base DT (Novo) -->
       <div class="sim-pane" id="pane-dt">
         <div class="sim-lbl">Upload da Base de Remessas</div>
         <label class="sim-up" for="fi">
           <input type="file" id="fi" accept=".xlsx,.xls,.csv" onchange="simLoadFile(this)">
           <div style="font-size:28px;margin-bottom:6px">📁</div>
           <div style="font-size:12px;font-weight:600;margin-bottom:4px">Clique para carregar</div>
-          <div style="font-size:10px;color:#64748b">Aceita .xlsx ou .csv (modelo Remessas / ZLES002)<br>A API fará o mapeamento inteligente das colunas.</div>
+          <div style="font-size:10px;color:var(--muted)">Aceita .xlsx ou .csv (modelo Remessas / ZLES002)<br>Obrigatórias: Nº transporte - Material - Volume acumulado - Qtde Remessa<br>Opcionais: Peso líquido, Cliente, Transportadora, Placa, Data Carregar</div>
         </label>
-        <div id="st" style="font-size:10px;color:#64748b;text-align:center;font-family:Consolas,monospace;min-height:16px"></div>
+        <div id="st" style="font-size:10px;color:var(--muted);text-align:center;min-height:16px"></div>
         
         <div id="dtw" style="display:none;flex-direction:column;gap:8px">
           <div class="sim-lbl">Filtros</div>
@@ -1674,27 +1659,25 @@
           <div class="sim-lbl" style="margin-top:4px">Selecionar DT</div>
           <input type="text" id="dtf" placeholder="DT, cliente, placa ou remessa..." oninput="aplicarFiltrosSim()">
           <div class="sim-dtlist" id="dtl"></div>
-          <div id="dtsi" style="font-size:10px;color:#00C85A;font-family:Consolas,monospace;min-height:14px"></div>
+          <div id="dtsi" style="font-size:11px;font-weight:700;color:var(--success);min-height:14px"></div>
         </div>
       </div>
       
-      <!-- Aba Resultado (Novo com PDF) -->
       <div class="sim-pane" id="pane-res">
         <div class="sim-lbl">Resumo da Carga</div>
         <div class="sim-card" id="rc"><div class="sim-emp" style="height:80px"><div>Rode a simulação primeiro</div></div></div>
         
-        <button class="sim-btnvd" id="btnpdf" onclick="imprimirResultadoSim()" disabled style="background:transparent; border:1px solid #00e5ff; color:#00e5ff; margin-top:4px;">🖨 SALVAR PDF / IMPRIMIR</button>
+        <button class="sim-btnpdf" id="btnpdf" onclick="imprimirResultadoSim()" disabled>🖨 Salvar PDF / Imprimir</button>
         
-        <div class="sim-lbl" style="margin-top:12px">Ordem de Carregamento</div>
-        <div id="ol"><div style="font-size:10px;color:#64748b;padding:6px">Aguardando...</div></div>
+        <div class="sim-lbl" style="margin-top:4px">Ordem de Carregamento</div>
+        <div id="ol"><div style="font-size:10px;color:var(--muted);padding:6px">Aguardando...</div></div>
       </div>
     </div>
     
-    <!-- Canvas 3D -->
     <div class="sim-cv" id="cvwrap">
       <div class="sim-emp" id="ecv" style="height:100%">
-        <div style="font-size:48px;opacity:.3">🚛</div>
-        <div>1. Configure o veículo<br>2. Suba a ZLES002 e selecione a DT<br>3. Clique em Simular</div>
+        <div style="font-size:48px;opacity:.35">🚛</div>
+        <div>1. Configure o veículo<br>2. Suba a planilha de remessas e selecione a DT<br>3. Clique em Simular</div>
       </div>
       <canvas id="c3d" style="display:none"></canvas>
       <div class="sim-leg3d" id="leg3d" style="display:none"><div class="sim-legtit">Legenda SKUs</div><div id="lgi"></div></div>
@@ -3372,7 +3355,7 @@ function changePage(dir) {
 }
 
 // ════════════════════════════════════════════════
-// LÓGICA DO SIMULADOR DE CORTES (COM NOVO MOTOR)
+// LÓGICA DO SIMULADOR DE CORTES (ATUALIZADO)
 // ════════════════════════════════════════════════
 var CORES=["#1932C8","#00C85A","#f97316","#a855f7","#ec4899","#06b6d4","#eab308","#ef4444","#84cc16","#f43f5e","#0ea5e9","#d946ef","#10b981","#fb923c","#6366f1"];
 var PH=["HFSX","HFDX","HFTX"];
@@ -3414,7 +3397,7 @@ async function buscarPlaca(event) {
   const placa = inputPlaca ? inputPlaca.value.toUpperCase().replace(/[^A-Z0-9]/g, "") : "";
   if (!placa) { alert("Por favor, digite a placa do caminhão."); return; }
   const btn = document.querySelector("button[onclick*='buscarPlaca']");
-  if (btn) { btn.innerHTML = "⏳ BUSCANDO NO SAP..."; btn.style.background = "#f97316"; }
+  if (btn) { btn.innerHTML = "⏳ BUSCANDO..."; btn.style.background = "var(--warn)"; }
   try {
     const resposta = await fetch(`http://localhost:5000/buscar?placa=${placa}`);
     const dados = await resposta.json();
@@ -3427,7 +3410,7 @@ async function buscarPlaca(event) {
   } catch (err) {
     alert("Erro ao consultar o SAP: " + err.message);
   } finally {
-    if (btn) { btn.innerHTML = "🔍 BUSCAR"; btn.style.background = "#00C85A"; }
+    if (btn) { btn.innerHTML = "🔍 BUSCAR"; btn.style.background = "var(--accent)"; }
   }
 }
 
@@ -3438,7 +3421,6 @@ function simTrocarAba(id){
   document.getElementById("pane-"+id).classList.add("on");
 }
 
-// ── Inteligência de Colunas ZLES002 ──
 var MAPA_SIM={
   dt:  {ex:["n transporte","nr transporte","nr. transporte","no transporte","transporte","dt"],ct:["n transporte","nr transporte","nr.transp","no transporte"]},
   mat: {ex:["material"],ct:["material"]},
@@ -3499,7 +3481,7 @@ function processarSimData(rows,col){
   var st=document.getElementById("st");
   var falta=["dt","mat","vol","qtd"].filter(function(c){return !col[c];});
   if(falta.length){
-    st.innerHTML="<span style='color:#ef4444'>Faltam colunas: "+falta.join(", ")+"</span><br>Vi: "+escHtml(Object.keys(rows[0]).slice(0,8).join(" | "));
+    st.innerHTML="<span style='color:var(--danger)'>Faltam colunas: "+falta.join(", ")+"</span><br>Vi: "+escHtml(Object.keys(rows[0]).slice(0,8).join(" | "));
     return;
   }
   DTS={}; META={}; SEL=null;
@@ -3576,7 +3558,7 @@ function aplicarFiltrosSim(){
 function renderDTL(dts){
   var el=document.getElementById("dtl");
   var mostrar=dts.slice(0,MAXLIST);
-  el.innerHTML=(dts.length?"":"<div style='font-size:10px;color:#64748b;padding:6px'>Nenhuma DT com esses filtros</div>")
+  el.innerHTML=(dts.length?"":"<div style='font-size:10px;color:var(--muted);padding:6px'>Nenhuma DT com esses filtros</div>")
    +mostrar.map(function(dt){
     var it=DTS[dt]||[],m=META[dt];
     var cli=m.clis.length>1?m.clis[0]+" +"+(m.clis.length-1):(m.clis[0]||"");
@@ -3585,13 +3567,13 @@ function renderDTL(dts){
       +"<input type='radio' name='dtr' value='"+escHtml(dt)+"'"+(dt===SEL?" checked":"")+">"
       +"<div style='flex:1;min-width:0'><div class='sim-dtn'>"+escHtml(dt)+"</div>"
       +"<div class='sim-dti2'>"+it.length+" SKUs | "+fmtN(m.cx)+" cx | "+m.vol.toFixed(1)+" m3"+(m.peso?" | "+fmtN(m.peso)+" kg":"")+"</div>"
-      +(cli?"<div style='font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' title='"+escHtml(m.clis.join("\n"))+"'>"+escHtml(cli)+"</div>":"")
-      +(sub?"<div style='font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>"+escHtml(sub)+"</div>":"")
+      +(cli?"<div class='sim-dti3' title='"+escHtml(m.clis.join("\n"))+"'>"+escHtml(cli)+"</div>":"")
+      +(sub?"<div class='sim-dti3'>"+escHtml(sub)+"</div>":"")
       +"</div>"
       +"<button class='sim-sbtn' onclick='event.stopPropagation();var l=this.closest(\".sim-dti\");selDTSim(l.dataset.dt,l);simular()'>► SIMULAR</button>"
       +"</label>";
   }).join("")
-   +(dts.length>MAXLIST?"<div style='font-size:9px;color:#64748b;padding:6px;text-align:center'>Mostrando "+MAXLIST+" de "+fmtN(dts.length)+" DTs.</div>":"");
+   +(dts.length>MAXLIST?"<div style='font-size:9px;color:var(--muted);padding:6px;text-align:center'>Mostrando "+MAXLIST+" de "+fmtN(dts.length)+" DTs.</div>":"");
   document.getElementById("dtw").style.display="flex";
 }
 
@@ -3681,19 +3663,19 @@ function simular(){
     +"<div class='sim-row'><span class='k'>% Ocupação</span><span class='v "+cor+"'>"+(pct*100).toFixed(1)+"%</span></div>"
     +"<div class='sim-row'><span class='k'>Resultado</span><span class='v "+cor+"'>"+res+"</span></div>"
     +(fardosCortados>0
-      ? "<div class='sim-row'><span class='k' style='color:#ef4444'>Fardos cortados</span><span class='v sim-err'>"+fardosCortados+"</span></div>"
-        +"<div class='sim-row'><span class='k' style='color:#ef4444'>Volume cortado</span><span class='v sim-err'>"+volCortado.toFixed(2)+" m3</span></div>"
+      ? "<div class='sim-row'><span class='k' style='color:var(--danger)'>Fardos cortados</span><span class='v sim-err'>"+fardosCortados+"</span></div>"
+        +"<div class='sim-row'><span class='k' style='color:var(--danger)'>Volume cortado</span><span class='v sim-err'>"+volCortado.toFixed(2)+" m3</span></div>"
       : "<div class='sim-row'><span class='k'>Fardos cortados</span><span class='v sim-ok'>0</span></div>")
-    +"<div class='sim-bar'><div class='sim-barfill' style='width:"+Math.min(pct*100,100)+"%;background:"+(pct>1?"#ef4444":pct>0.85?"#f97316":"#00C85A")+"'></div></div>"
-    +(k>1?"<div style='font-size:9px;color:#64748b;margin-top:6px'>Desenho agrupado: cada bloco = "+k+" unidades</div>":"");
+    +"<div class='sim-bar'><div class='sim-barfill' style='width:"+Math.min(pct*100,100)+"%;background:"+(pct>1?"var(--danger)":pct>0.85?"#f97316":"var(--success)")+"'></div></div>"
+    +(k>1?"<div style='font-size:9px;color:var(--muted);margin-top:6px'>Desenho agrupado: cada bloco = "+k+" unidades</div>":"");
 
   document.getElementById("ol").innerHTML=skus.map(function(s,i){
     return "<div class='sim-oi'>"
       +"<div class='sim-on2'>"+(i+1)+"</div>"
       +"<div style='width:10px;height:10px;min-width:10px;border-radius:2px;background:"+s.cor+";margin-top:2px'></div>"
       +"<div style='flex:1;line-height:1.4'>"
-      +"<div style='font-size:10px'>"+escHtml(s.nome)+(s.ph?"<span class='sim-tagph'>PH</span>":"")+"</div>"
-      +"<div style='font-size:9px;color:#64748b;font-family:Consolas,monospace'>"+fmtN(s.qtd)+" fardos | "+s.vol.toFixed(2)+" m3"+(s.peso?" | "+fmtN(s.peso)+" kg":"")+"</div>"
+      +"<div style='font-size:10px; color:var(--text);'>"+escHtml(s.nome)+(s.ph?"<span class='sim-tagph'>PH</span>":"")+"</div>"
+      +"<div style='font-size:9px;color:var(--muted);font-family:Consolas,monospace'>"+fmtN(s.qtd)+" fardos | "+s.vol.toFixed(2)+" m3"+(s.peso?" | "+fmtN(s.peso)+" kg":"")+"</div>"
       +"</div></div>";
   }).join("");
 
@@ -3807,10 +3789,6 @@ function imprimirResultadoSim(){
   imgs.forEach(function(im){if(im.complete){if(--faltam===0)go();}else im.onload=im.onerror=function(){if(--faltam===0)go();};});
 }
 
-// ── Desenho 3D (Preservando Dark/Light Theme) ──
-var BXS=[],DV={};
-var drag3d=false,rgt3d=false,lx3d=0,ly3d=0;
-
 function desenhar3D(boxes,comp,larg,alt,skus){
   document.getElementById("ecv").style.display="none";
   document.getElementById("c3d").style.display="block";
@@ -3859,20 +3837,15 @@ function draw3d(){
   cv.width=W; cv.height=H;
   var ctx=cv.getContext("2d");
   
-  var isLight = document.body.classList.contains('light-theme') || document.body.classList.contains('printing-simulador');
+  // Renderiza fundo sempre como no original isolado
   var gr=ctx.createRadialGradient(W*.3,H*.3,0,W*.5,H*.5,W*.7);
-  
-  if(isLight) {
-    gr.addColorStop(0,"#ffffff"); gr.addColorStop(1,"#eef2ee");
-  } else {
-    gr.addColorStop(0,"#0d1a3a"); gr.addColorStop(1,"#050a14");
-  }
-  
+  gr.addColorStop(0,"#FFFFFF"); gr.addColorStop(1,"#E4E3DE");
   ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
+  
   var C=DV.comp,L=DV.larg,A=DV.alt;
   var ocx=C/2,ocy=A/2,ocz=L/2;
   
-  ctx.strokeStyle = isLight ? "rgba(200,216,200,0.8)" : "rgba(31,45,74,0.5)"; 
+  ctx.strokeStyle = "rgba(174,171,158,0.6)"; 
   ctx.lineWidth=0.5;
   for(var i=0;i<=10;i++){
     var p1=proj3d(i/10*C-ocx,-ocy,-ocz),p2=proj3d(i/10*C-ocx,-ocy,L-ocz);
@@ -3884,7 +3857,7 @@ function draw3d(){
     return proj3d(p[0]-ocx,p[1]-ocy,p[2]-ocz);
   });
   
-  ctx.strokeStyle= isLight ? "rgba(10,122,0,0.8)" : "rgba(25,50,200,0.8)"; 
+  ctx.strokeStyle= "rgba(3,38,127,0.85)"; 
   ctx.lineWidth=1.5;
   [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(function(e){
     ctx.beginPath();ctx.moveTo(co[e[0]].px,co[e[0]].py);ctx.lineTo(co[e[1]].px,co[e[1]].py);ctx.stroke();
