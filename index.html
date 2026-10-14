@@ -1492,6 +1492,16 @@
   #printArea .pr-foot { margin-top: 14px; padding-top: 6px; border-top: 1px solid #E1E0DA; font-size: 8pt; color: #6b6a63; display: flex; justify-content: space-between; }
   #printArea .pr-ass { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 34px; page-break-inside: avoid; break-inside: avoid; }
   #printArea .pr-ass div { border-top: 1px solid #1d2340; padding-top: 4px; font-size: 8.5pt; color: #6b6a63; text-align: center; justify-content: center; display: flex; }
+
+  /* Caixas do Romaneio injetadas no Simulador */
+  #printArea .rom-obs { margin-top: 16px; border: 1px solid #1d2340; border-radius: 4px; display: flex; flex-direction: column; page-break-inside: avoid; break-inside: avoid; }
+  #printArea .rom-obs-inner { display: flex; flex: 1; }
+  #printArea .rom-box-col { display: flex; flex-direction: column; flex: 1; border-right: 1px solid #1d2340; }
+  #printArea .rom-box-col:last-child { border-right: none; }
+  #printArea .rom-box-fixed { width: 140px; flex: none; }
+  #printArea .rom-box-tit { background: #03267F; color: #fff; padding: 5px 10px; font-size: 8pt; font-weight: 700; text-transform: uppercase; text-align: center; }
+  #printArea .rom-box-body { min-height: 50px; padding: 5px 8px; flex: 1; display: flex; align-items: flex-end;}
+  #printArea .rom-dash { width: 100%; border-bottom: 1px dashed #1d2340; margin-bottom: 5px; }
 </style>
 </head>
 <body>
@@ -1681,14 +1691,18 @@
       </div>
       
       <div class="sim-pane" id="pane-res">
-        <div class="sim-lbl">Resumo da Carga</div>
-        <div class="sim-card" id="rc"><div class="sim-emp" style="height:80px"><div>Rode a simulação primeiro</div></div></div>
-        
-        <button class="sim-btnpdf" id="btnpdf" onclick="imprimirResultadoSim()" disabled>🖨 Salvar PDF / Imprimir</button>
-        
-        <div class="sim-lbl" style="margin-top:4px">Ordem de Carregamento</div>
-        <div id="ol"><div style="font-size:10px;color:var(--muted);padding:6px">Aguardando...</div></div>
-      </div>
+  <div class="sim-lbl">Resumo da Carga</div>
+  <div class="sim-card" id="rc"><div class="sim-emp" style="height:80px"><div>Rode a simulação primeiro</div></div></div>
+  
+  <!-- Dois botões de PDF -->
+  <div style="display: flex; gap: 8px; margin-top: 4px;">
+    <button class="sim-btnpdf" id="btnpdf" onclick="imprimirResultadoSim()" disabled>🖨 PDF (Cortes)</button>
+    <button class="sim-btnpdf" id="btnpdf-int" onclick="imprimirResultadoIntegrado()" disabled style="border-color: #00e5ff; color: #00e5ff;">🖨 PDF (Cortes + Romaneio)</button>
+  </div>
+  
+  <div class="sim-lbl" style="margin-top:4px">Ordem de Carregamento</div>
+  <div id="ol"><div style="font-size:10px;color:var(--muted);padding:6px">Aguardando...</div></div>
+</div>
     </div>
     
     <div class="sim-cv" id="cvwrap">
@@ -3701,6 +3715,7 @@ function simular(){
         fardosCortados:fardosCortados,volCortado:volCortado,k:k};
   
   document.getElementById("btnpdf").disabled=false;
+  document.getElementById("btnpdf-int").disabled=false;
   desenhar3D(boxes,vC,vL,vA,skus);
   simTrocarAba("res");
 }
@@ -3738,6 +3753,9 @@ function capturarVista(cam){
   return url;
 }
 
+// ==========================================
+// 1. FUNÇÃO DO BOTÃO "PDF CORTES" (SIMPLES)
+// ==========================================
 function imprimirResultadoSim(){
   if(!LAST){alert("Rode a simulação primeiro");return;}
   document.body.classList.add("printing-simulador");
@@ -3799,7 +3817,6 @@ function imprimirResultadoSim(){
    
   document.getElementById("printArea").innerHTML=html;
 
-  // TRUQUE PARA FORÇAR A PÁGINA EM RETRATO E ANULAR O "LANDSCAPE" DO ROMANEIO
   var style = document.createElement('style');
   style.id = 'force-portrait-style';
   style.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 12mm !important; } }';
@@ -3814,7 +3831,146 @@ function imprimirResultadoSim(){
       window.print();
       document.title=tituloAntes; 
       document.body.classList.remove("printing-simulador");
-      // Remove o truque após imprimir
+      var fs = document.getElementById('force-portrait-style');
+      if(fs) fs.remove();
+    },50);
+  }
+  if(!faltam) return go();
+  imgs.forEach(function(im){
+    if(im.complete){if(--faltam===0)go();}
+    else im.onload=im.onerror=function(){if(--faltam===0)go();};
+  });
+}
+
+// ==========================================
+// 2. FUNÇÃO DO BOTÃO "PDF COMPLETO" (CORTES + ROMANEIO)
+// ==========================================
+function imprimirResultadoIntegrado(){
+  if(!LAST){alert("Rode a simulação primeiro");return;}
+  document.body.classList.add("printing-simulador");
+  
+  var L=LAST,m=L.meta||{clis:[],rems:[]};
+  var corHex={"sim-ok":"#007836","sim-warn":"#C85F0F","sim-err":"#B44B5A"}[L.cor];
+  var agora=new Date();
+  var emissao=agora.toLocaleDateString("pt-BR")+" "+agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  
+  var imgPersp=capturarVista(null);
+  var imgLat=capturarVista({rx:0.02,ry:0});
+  var imgTopo=capturarVista({rx:Math.PI/2-0.02,ry:0});
+  
+  function li(k,v){return v===""||v==null?"":"<div><span>"+k+"</span><span>"+v+"</span></div>";}
+  var veic=fmtN(L.vC,2)+" x "+fmtN(L.vL,2)+" x "+fmtN(L.vA,2)+" m"+(L.tipo?" ("+escHtml(L.tipo)+")":"");
+  
+  function getPalSim(mat) {
+      if(typeof PALET_DATA === 'undefined') return 0;
+      var s = String(mat).trim().replace(/\.0+$/, '');
+      var n = String(parseInt(s, 10));
+      var pref = paletPrefs[s] || paletPrefs[n] || 'A';
+      var found = PALET_DATA.find(p => p[0] == s || parseInt(p[0],10) == n);
+      if(found && found[3]) {
+         var centros = found[3];
+         var cKey = Object.keys(centros)[0];
+         if(cKey) return centros[cKey][pref] || 0;
+      }
+      return 0;
+  }
+
+  var totalFechados = 0;
+  var totalFracoes = 0;
+
+  var tbodyHtml = L.skus.map(function(s,i){
+      var pal = getPalSim(s.mat);
+      var fechados = (pal > 0) ? Math.floor(s.qtd / pal) : 0;
+      var fracoes = (pal > 0) ? (s.qtd % pal) : s.qtd;
+      totalFechados += fechados;
+      totalFracoes += fracoes;
+
+      return "<tr><td>"+(i+1)+"</td><td><span class='sw' style='background:"+s.cor+"'></span></td><td>"+escHtml(s.mat)+"</td>"
+       +"<td>"+escHtml(s.den||s.mat)+(s.ph?"<span class='ph'>PH</span>":"")+"</td>"
+       +"<td class='n'>"+fmtN(s.qtd)+"</td>"
+       +"<td class='n'><b>"+fechados+"</b></td>"
+       +"<td class='n'><b>"+fracoes+"</b></td>"
+       +"<td class='n'>"+fmtN(s.vol,2)+"</td><td class='n'>"+(s.peso?fmtN(s.peso):"-")+"</td></tr>";
+  }).join("");
+
+  var html="<div class='pr'>"
+   +"<div class='pr-top'><div class='logo'>suzano</div><div class='sep'></div>"
+   +"<div><h1>simulador de carga &middot; romaneio</h1><div style='font-size:8.5pt;opacity:.8'>UNBC &middot; Planejamento de Estiva</div></div>"
+   +"<div class='dt'>DT <b style='font-size:13pt'>"+escHtml(L.dt)+"</b><br>Emitido em "+emissao+"</div></div>"
+   +"<div class='pr-res' style='--c:"+corHex+"'>"
+   +(L.fardosCortados>0||L.pct>1
+     ?"<div><div class='lbl2'>Corte previsto</div><div class='big'>"+fmtN(L.fardosCortados)+" fardos <span style='font-size:13pt;font-weight:500'>&middot; "+fmtN(L.volCortado,2)+" m&sup3;</span></div></div>"
+     :"<div><div class='lbl2'>Resultado da Estiva</div><div class='big'>"+L.res+"</div></div>")
+   +"<div style='margin-left:auto;text-align:right'><div class='lbl2'>Ocupação (m³)</div><div class='big'>"+(L.pct*100).toFixed(1)+"%</div></div></div>"
+   +"<div class='pr-grid'>"
+   +li("Data carregar",m.dc&&m.dc.txt?escHtml(m.dc.txt):"")
+   +li("Transportadora",m.tra?escHtml(m.tra):"")
+   +li("Placa",m.pla?escHtml(m.pla):"")
+   +li("Motorista",m.mot?escHtml(m.mot):"")
+   +li("Remessas",m.rems.length?escHtml(m.rems.join(", ")):"")
+   +li("Cliente"+(m.clis.length>1?"s":""),m.clis.length?m.clis.map(escHtml).join("<br>"):"")
+   +li("Veículo (C x L x A)",veic)
+   +li("Volume veículo",fmtN(L.volVeic,2)+" m3")
+   +li("Volume total DT",fmtN(L.volTotal,2)+" m3")
+   +li("Total SKUs",L.skus.length)
+   +li("Total fardos",fmtN(L.cxTotal))
+   +li("Peso líquido",L.pesoTotal>0?fmtN(L.pesoTotal)+" kg":"")
+   +li("Fardos cortados",L.fardosCortados>0?"<span style='color:#B44B5A'>"+fmtN(L.fardosCortados)+"</span>":"0")
+   +li("Volume cortado",L.fardosCortados>0?"<span style='color:#B44B5A'>"+fmtN(L.volCortado,2)+" m3</span>":"")
+   +"</div>"
+   +"<h2>Estiva simulada</h2>"
+   +"<div class='pr-img'><figure class='fp'><img src='"+imgPersp+"'><figcaption>Perspectiva</figcaption></figure>"
+   +"<div class='col'><figure><img src='"+imgLat+"'><figcaption>Vista lateral</figcaption></figure>"
+   +"<figure><img src='"+imgTopo+"'><figcaption>Vista de topo</figcaption></figure></div></div>"
+   +(L.k>1?"<div style='font-size:8pt;color:#6b6a63;margin-top:4px;margin-bottom:8px'>Desenho agrupado: cada bloco = "+L.k+" unidades</div>":"<div style='margin-bottom:8px'></div>")
+   
+   +"<h2>Ordem de Carregamento & Romaneio</h2>"
+   +"<table><thead><tr><th>#</th><th></th><th>Material</th><th>Descrição</th><th class='n'>Fardos</th><th class='n'>Paletes</th><th class='n'>Frações</th><th class='n'>m³</th><th class='n'>kg</th></tr></thead><tbody>"
+   + tbodyHtml
+   +"<tr style='font-weight:700'><td colspan='4'>Total</td><td class='n'>"+fmtN(L.cxTotal)+"</td><td class='n'>"+totalFechados+"</td><td class='n'>"+totalFracoes+"</td><td class='n'>"+fmtN(L.volTotal,2)+"</td><td class='n'>"+(L.pesoTotal?fmtN(L.pesoTotal):"-")+"</td></tr>"
+   +"</tbody></table>"
+
+   +"<div class='rom-obs'>"
+   +"  <div class='rom-obs-inner'>"
+   +"    <div class='rom-box-col'>"
+   +"      <div class='rom-box-tit'>Observações</div>"
+   +"      <div class='rom-box-body'></div>"
+   +"    </div>"
+   +"    <div class='rom-box-col'>"
+   +"      <div class='rom-box-tit'>Separador</div>"
+   +"      <div class='rom-box-body'><div class='rom-dash'></div></div>"
+   +"    </div>"
+   +"    <div class='rom-box-col rom-box-fixed'>"
+   +"      <div class='rom-box-tit'>Ordem de Carregamento</div>"
+   +"      <div class='rom-box-body'></div>"
+   +"    </div>"
+   +"    <div class='rom-box-col rom-box-fixed'>"
+   +"      <div class='rom-box-tit'>Carimbo de Corte</div>"
+   +"      <div class='rom-box-body'></div>"
+   +"    </div>"
+   +"  </div>"
+   +"</div>"
+
+   +"<div class='pr-ass'><div>Responsável pela simulação</div><div>Conferente / Expedição</div></div>"
+   +"<div class='pr-foot'><span>Suzano &middot; UNBC &middot; Relatório Integrado</span><span>Cubagem calculada por volume (m³)</span></div>"
+   +"</div>";
+   
+  document.getElementById("printArea").innerHTML=html;
+
+  var style = document.createElement('style');
+  style.id = 'force-portrait-style';
+  style.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 12mm !important; } }';
+  document.head.appendChild(style);
+
+  var tituloAntes=document.title;
+  document.title="Relatorio_Completo_DT_"+L.dt;
+  
+  var imgs=document.querySelectorAll("#printArea img"),faltam=imgs.length;
+  function go(){
+    setTimeout(function(){
+      window.print();
+      document.title=tituloAntes; 
+      document.body.classList.remove("printing-simulador");
       var fs = document.getElementById('force-portrait-style');
       if(fs) fs.remove();
     },50);
