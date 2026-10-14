@@ -1447,47 +1447,49 @@
   #page-simulador * { cursor: none; }
   #page-simulador input, #page-simulador select, #page-simulador .sim-up { cursor: default; }
   #page-simulador .sim-tab, #page-simulador .sim-btnvd, #page-simulador .sim-cbtn, #page-simulador .sim-dti, #page-simulador .sim-sbtn, #page-simulador .sim-btnpdf { cursor: none; }  
-/* ── IMPRESSÃO PDF DO SIMULADOR ── */
+/* ── IMPRESSÃO PDF DO SIMULADOR (ISOLADO DO ROMANIX) ── */
   #printArea { display: none; }
   @page { size: A4 portrait; margin: 12mm; }
   @media print {
     body.printing-simulador, body.printing-simulador html { height: auto !important; overflow: visible !important; display: block !important; background: #fff !important; }
-    body.printing-simulador header, body.printing-simulador .sim-main, body.printing-simulador .tabs, body.printing-simulador #cursor-arrow, body.printing-simulador #cursor-canvas { display: none !important; }
+    body.printing-simulador > *:not(#printArea) { display: none !important; }
     body.printing-simulador #printArea { display: block !important; }
-    body.printing-simulador * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.printing-simulador * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
-  .pr { font-family: "Suzano Display", "Segoe UI", Arial, sans-serif; color: #1d2340; font-size: 10.5pt; font-variant-numeric: tabular-nums; }
-  .pr-top { background: #03267F; color: #fff; display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 4px solid #00C85A; }
-  .pr-top .logo { font-size: 26px; font-family: "Suzano Unicase", "Suzano Display", sans-serif; font-weight: 700; text-shadow: none; letter-spacing: normal; text-transform: lowercase; }
-  .pr-top .sep { width: 1px; height: 30px; background: rgba(255,255,255,.3); }
-  .pr-top h1 { font-family: "Suzano Unicase", "Suzano Display", sans-serif; font-weight: 500; font-size: 17px; text-transform: lowercase; letter-spacing: -.01em; line-height: 1.1; margin: 0; text-shadow: none; }
-  .pr-top .dt { margin-left: auto; text-align: right; font-size: 9pt; opacity: .85; line-height: 1.4; }
-  .pr-res { display: flex; align-items: center; gap: 14px; margin: 12px 0 8px; padding: 10px 14px; border-radius: 6px; background: #F5F5F3; border-left: 6px solid var(--c); }
-  .pr-res .big { font-size: 20pt; font-weight: 700; color: var(--c); }
-  .pr-res .lbl2 { font-size: 9pt; color: #6b6a63; }
-  .pr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; margin-bottom: 10px; }
-  .pr-grid div { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid #E1E0DA; font-size: 9.5pt; }
-  .pr-grid span:first-child { color: #6b6a63; white-space: nowrap; }
-  .pr-grid span:last-child { font-weight: 700; color: #03267F; text-align: right; }
-  .pr h2 { font-size: 9pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1932C8; margin: 12px 0 6px; }
-  .pr-img { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
-  .pr-img figure { border: 1px solid #E1E0DA; border-radius: 4px; overflow: hidden; margin: 0; }
-  .pr-img img { width: 100%; display: block; object-fit: contain; background: #F5F5F3; }
-  .pr-img .fp { display: flex; flex-direction: column; }
-  .pr-img .fp img { flex: 1; min-height: 0; max-height: 78mm; }
-  .pr-img .col img { max-height: 36mm; }
-  .pr-img figcaption { font-size: 8pt; color: #6b6a63; padding: 3px 6px; background: #F5F5F3; }
-  .pr-img .col { display: flex; flex-direction: column; gap: 8px; }
-  .pr table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-  .pr th { background: #03267F; color: #fff; text-align: left; padding: 5px 6px; font-weight: 700; font-size: 8.5pt; text-shadow: none; letter-spacing: normal; text-transform: none; }
-  .pr td { padding: 4px 6px; border-bottom: 1px solid #E1E0DA; vertical-align: top; color: #1d2340; font-family: "Suzano Display", sans-serif; font-weight: 400; }
-  .pr tr { page-break-inside: avoid; break-inside: avoid; background: transparent; }
-  .pr td.n, .pr th.n { text-align: right; }
-  .pr .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
-  .pr .ph { background: rgba(200,95,15,.12); color: #C85F0F; font-size: 7.5pt; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
-  .pr-foot { margin-top: 14px; padding-top: 6px; border-top: 1px solid #E1E0DA; font-size: 8pt; color: #6b6a63; display: flex; justify-content: space-between; }
-  .pr-ass { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 34px; page-break-inside: avoid; break-inside: avoid; }
-  .pr-ass div { border-top: 1px solid #1d2340; padding-top: 4px; font-size: 8.5pt; color: #6b6a63; text-align: center; }
+  
+  #printArea .pr { font-family: "Suzano Display", "Segoe UI", Arial, sans-serif; color: #1d2340; font-size: 10.5pt; font-variant-numeric: tabular-nums; background: #fff; }
+  #printArea .pr-top { background: #03267F; color: #fff; display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 4px solid #00C85A; }
+  #printArea .pr-top .logo { font-size: 26px; font-family: "Suzano Unicase", "Suzano Display", sans-serif; font-weight: 700; text-shadow: none; letter-spacing: normal; text-transform: lowercase; }
+  #printArea .pr-top .sep { width: 1px; height: 30px; background: rgba(255,255,255,.3); }
+  #printArea .pr-top h1 { font-family: "Suzano Unicase", "Suzano Display", sans-serif; font-weight: 500; font-size: 17px; text-transform: lowercase; letter-spacing: -.01em; line-height: 1.1; margin: 0; text-shadow: none; }
+  #printArea .pr-top .dt { margin-left: auto; text-align: right; font-size: 9pt; opacity: .85; line-height: 1.4; }
+  #printArea .pr-res { display: flex; align-items: center; gap: 14px; margin: 12px 0 8px; padding: 10px 14px; border-radius: 6px; background: #F5F5F3; border-left: 6px solid var(--c); }
+  #printArea .pr-res .big { font-size: 20pt; font-weight: 700; color: var(--c); text-shadow: none; }
+  #printArea .pr-res .lbl2 { font-size: 9pt; color: #6b6a63; text-transform: none; }
+  #printArea .pr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; margin-bottom: 10px; }
+  #printArea .pr-grid div { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid #E1E0DA; font-size: 9.5pt; }
+  #printArea .pr-grid span:first-child { color: #6b6a63; white-space: nowrap; }
+  #printArea .pr-grid span:last-child { font-weight: 700; color: #03267F; text-align: right; }
+  #printArea .pr h2 { font-size: 9pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1932C8; margin: 12px 0 6px; }
+  #printArea .pr-img { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+  #printArea .pr-img figure { border: 1px solid #E1E0DA; border-radius: 4px; overflow: hidden; margin: 0; background: #fff;}
+  #printArea .pr-img img { width: 100%; display: block; object-fit: contain; background: #F5F5F3; }
+  #printArea .pr-img .fp { display: flex; flex-direction: column; }
+  #printArea .pr-img .fp img { flex: 1; min-height: 0; max-height: 78mm; }
+  #printArea .pr-img .col img { max-height: 36mm; }
+  #printArea .pr-img figcaption { font-size: 8pt; color: #6b6a63; padding: 3px 6px; background: #F5F5F3; }
+  #printArea .pr-img .col { display: flex; flex-direction: column; gap: 8px; }
+  #printArea .pr table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 0; }
+  #printArea .pr th { background: #03267F; color: #fff; text-align: left; padding: 5px 6px; font-weight: 700; font-size: 8.5pt; text-shadow: none; letter-spacing: normal; text-transform: none; border: none; box-shadow: none; }
+  #printArea .pr td { padding: 4px 6px; border-bottom: 1px solid #E1E0DA; vertical-align: top; color: #1d2340; font-family: "Suzano Display", sans-serif; font-weight: 400; border-top: none; border-left: none; border-right: none;}
+  #printArea .pr tr { page-break-inside: avoid; break-inside: avoid; background: transparent; box-shadow: none; border: none; }
+  #printArea .pr tr:hover { background: transparent; }
+  #printArea .pr td.n, #printArea .pr th.n { text-align: right; }
+  #printArea .pr .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
+  #printArea .pr .ph { background: rgba(200,95,15,.12); color: #C85F0F; font-size: 7.5pt; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
+  #printArea .pr-foot { margin-top: 14px; padding-top: 6px; border-top: 1px solid #E1E0DA; font-size: 8pt; color: #6b6a63; display: flex; justify-content: space-between; }
+  #printArea .pr-ass { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 34px; page-break-inside: avoid; break-inside: avoid; }
+  #printArea .pr-ass div { border-top: 1px solid #1d2340; padding-top: 4px; font-size: 8.5pt; color: #6b6a63; text-align: center; }
 </style>
 </head>
 <body>
@@ -3739,7 +3741,7 @@ function imprimirResultadoSim(){
   document.body.classList.add("printing-simulador");
   
   var L=LAST,m=L.meta||{clis:[],rems:[]};
-  // Cores idênticas ao PDF original
+  // Traz de volta os códigos exatos de cores puras da Suzano
   var corHex={"sim-ok":"#007836","sim-warn":"#C85F0F","sim-err":"#B44B5A"}[L.cor];
   var agora=new Date();
   var emissao=agora.toLocaleDateString("pt-BR")+" "+agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
