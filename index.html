@@ -3548,7 +3548,7 @@ function processarSimData(rows,col){
   document.getElementById("ftr").parentNode.style.display=tk.length?"flex":"none";
   document.getElementById("dtf").value="";
   document.getElementById("dtsi").textContent="";
-  st.textContent=fmtN(rows.length)+" linhas | "+fmtN(ALLDTS.length)+" DTs carregadas"+(semVol?" | "+semVol+" s/ volume":"");
+  st.textContent=fmtN(rows.length)+" linhas | "+fmtN(ALLDTS.length)+" DTs carregadas"+(semVol?" | "+semVol+" linha(s) sem volume":"");
   aplicarFiltrosSim();
 }
 
