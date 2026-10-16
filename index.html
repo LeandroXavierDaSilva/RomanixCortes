@@ -1669,14 +1669,27 @@
       </div>
       
       <div class="sim-pane" id="pane-dt">
+        
+        <!-- BLOCO 1: Buscar DT Específica -->
+        <div class="sim-lbl">Buscar DT no SAP</div>
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <input type="text" id="vDT" placeholder="Nº da DT" style="text-transform: uppercase; flex: 1;">
+          <button type="button" class="sim-btnvd" onclick="buscarDTSAP(event, false)" style="width: auto; white-space: nowrap;">🔍 BUSCAR</button>
+        </div>
+
+        <!-- BLOCO 2: Upload Manual -->
         <div class="sim-lbl">Upload da Base de Remessas</div>
-        <label class="sim-up" for="fi">
+        <label class="sim-up" for="fi" style="margin-bottom: 12px;">
           <input type="file" id="fi" accept=".xlsx,.xls,.csv" onchange="simLoadFile(this)">
           <div style="font-size:28px;margin-bottom:6px">📁</div>
           <div style="font-size:12px;font-weight:600;margin-bottom:4px">Clique para carregar</div>
           <div style="font-size:10px;color:var(--muted)">Aceita .xlsx ou .csv (modelo Remessas / ZLES002)<br>Obrigatórias: Nº transporte - Material - Volume acumulado - Qtde Remessa<br>Opcionais: Peso líquido, Cliente, Transportadora, Placa, Data Carregar</div>
         </label>
-        <div id="st" style="font-size:10px;color:var(--muted);text-align:center;min-height:16px"></div>
+
+        <!-- BLOCO 3: Base Completa (Abaixo do Upload) -->
+        <button type="button" class="sim-btnvd" onclick="buscarDTSAP(event, true)" style="width: 100%; background: transparent; border: 1.5px dashed var(--accent); color: var(--accent);">📥 BAIXAR BASE COMPLETA NO SAP</button>
+
+        <div id="st" style="font-size:10px;color:var(--muted);text-align:center;min-height:16px; margin-top: 12px;"></div>
         
         <div id="dtw" style="display:none;flex-direction:column;gap:8px">
           <div class="sim-lbl">Filtros</div>
@@ -3445,6 +3458,82 @@ async function buscarPlaca(event) {
   }
 }
 
+// ── Integração SAP Local (Buscar DT na ZLES002) ──
+// ──// ── Integração SAP Local (Buscar DT na ZLES002) ──
+async function buscarDTSAP(event, baseCompleta = false) {
+  if (event) event.preventDefault();
+  
+  const inputDT = document.getElementById("vDT");
+  let dt = "";
+  
+  if (!baseCompleta) {
+    dt = inputDT ? inputDT.value.trim() : "";
+    if (!dt) { 
+      alert("Por favor, digite o número da DT ou use o botão 'Baixar Base Completa'."); 
+      return; 
+    }
+  }
+
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  const originalBg = btn.style.background;
+  
+  // BLOQUEIA TODOS OS BOTÕES DE BUSCA PARA EVITAR CLIQUES DUPLOS
+  const todosBotoes = document.querySelectorAll(".sim-btnvd");
+  todosBotoes.forEach(b => b.disabled = true);
+  
+  btn.innerHTML = "⏳ PROCESSANDO...";
+  btn.style.background = "var(--warn)"; 
+  btn.style.color = "#000";
+
+  const st = document.getElementById("st");
+  st.textContent = baseCompleta 
+    ? `Baixando a base completa do SAP (ZLES002)... Isso pode levar alguns minutos. Não feche a tela.` 
+    : `Buscando DT ${dt} no SAP (ZLES002)... Por favor, aguarde.`;
+
+  try {
+    const url = baseCompleta ? `http://localhost:5000/buscar-dt` : `http://localhost:5000/buscar-dt?numero=${dt}`;
+    const resposta = await fetch(url);
+    const dados = await resposta.json();
+    
+    if (dados.erro) throw new Error(dados.erro);
+
+    const binaryString = window.atob(dados.arquivo_base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const wb = XLSX.read(bytes.buffer, { type: "array", cellDates: true });
+    let escolhida = null;
+    
+    for (let i = 0; i < wb.SheetNames.length; i++) {
+      let rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[i]], { defval: "" });
+      if (!rows.length) continue;
+      let col = mapearColunasSim(Object.keys(rows[0]));
+      if (col.dt && col.mat && col.vol && col.qtd) { escolhida = { rows: rows, col: col }; break; }
+      if (!escolhida) escolhida = { rows: rows, col: col };
+    }
+
+    if (!escolhida) throw new Error("A planilha baixada do SAP está vazia.");
+
+    processarSimData(escolhida.rows, escolhida.col);
+    st.textContent = `Sucesso! Arquivo ${dados.nome_arquivo} importado diretamente do SAP.`;
+
+  } catch (err) {
+    alert("Erro ao consultar o SAP: " + err.message);
+    st.textContent = "Falha na integração com o SAP.";
+  } finally {
+    // DESBLOQUEIA OS BOTÕES QUANDO O ROBÔ TERMINAR
+    todosBotoes.forEach(b => b.disabled = false);
+    
+    btn.innerHTML = originalText;
+    btn.style.background = originalBg;
+    if (baseCompleta) btn.style.color = "var(--accent)";
+  }
+}
+
 function simTrocarAba(id){
   var ids=["veic","dt","res"];
   document.querySelectorAll(".sim-tab").forEach(function(t,i){t.classList.toggle("on",ids[i]===id);});
@@ -3643,37 +3732,57 @@ function simular(){
             ph:isPH(item.den||item.mat)};
   });
 
-  var nph=skus.filter(function(s){return !s.ph;}).sort(function(a,b){return a.vol-b.vol;});
-  var ph=skus.filter(function(s){return s.ph;}).sort(function(a,b){return a.vol-b.vol;});
-  skus=nph.concat(ph);
-  skus.forEach(function(s,i){s.cor=CORES[i%CORES.length];});
+ var nph=skus.filter(function(s){return !s.ph;}).sort(function(a,b){return a.vol-b.vol;});
+      var ph=skus.filter(function(s){return s.ph;}).sort(function(a,b){return a.vol-b.vol;});
+      skus=nph.concat(ph);
+      skus.forEach(function(s,i){s.cor=CORES[i%CORES.length];});
 
-  var volTotal=skus.reduce(function(s,q){return s+q.vol;},0);
-  var volVeic=vC*vL*vA;
-  var pct=volTotal/volVeic;
-  var cxTotal=skus.reduce(function(s,q){return s+q.qtd;},0);
-  var pesoTotal=itens.reduce(function(s,i){return s+(i.peso||0);},0);
+      // --- INÍCIO DA NOVA LÓGICA DE CORTE PROPORCIONAL ---
+      var volTotalOriginal = skus.reduce(function(s,q){return s+q.vol;},0);
+      var volVeic = vC * vL * vA;
+      var pct = volTotalOriginal / volVeic;
+      var cxTotalOriginal = skus.reduce(function(s,q){return s+q.qtd;},0);
 
-  var boxes=[],unCarregadas=0;
-  var cx=0,cy=0,cz=0,maxH=0,maxD=0;
-  skus.forEach(function(s){
-    var rest=Math.ceil(s.qtd);
-    while(rest>0){
-      if(cx+s.w>vL+0.001){cx=0;cy+=maxH;maxH=0;}
-      if(cy+s.h>vA+0.001){cx=0;cy=0;maxH=0;cz+=maxD;maxD=0;}
-      if(cz+s.d>vC+0.001) break;
-      boxes.push({x:cx+s.w/2,y:cy+s.h/2,z:cz+s.d/2,w:s.w,h:s.h,d:s.d,cor:s.cor,nome:s.nome});
-      maxH=Math.max(maxH,s.h);
-      maxD=Math.max(maxD,s.d);
-      cx+=s.w;
-      unCarregadas+=Math.min(k,rest);
-      rest-=k;
-    }
-  });
+      // Aplica o corte proporcional (rateio) se a DT for maior que o caminhão
+      if (volTotalOriginal > volVeic) {
+        // Multiplica por 0.98 para criar uma margem segura de acomodação 3D
+        var fatorRetencao = (volVeic * 0.98) / volTotalOriginal; 
+        
+        skus.forEach(function(s) {
+          var novaQtd = Math.floor(s.qtd * fatorRetencao);
+          if (novaQtd < 1) novaQtd = 1; // Regra: Nunca zera um produto
+          
+          s.vol = (s.vol / s.qtd) * novaQtd; // Atualiza o volume rateado
+          if (s.peso) s.peso = (s.peso / s.qtd) * novaQtd; // Atualiza o peso rateado
+          s.qtd = novaQtd; // Atualiza a quantidade final
+        });
+      }
 
-  var fardosNoBox=unCarregadas;
-  var fardosCortados=Math.max(0,Math.round(cxTotal)-fardosNoBox);
-  var volCortado=fardosCortados>0 ? volTotal*(fardosCortados/cxTotal) : 0;
+      var volTotal = skus.reduce(function(s,q){return s+q.vol;},0);
+      var cxTotal = skus.reduce(function(s,q){return s+q.qtd;},0);
+      var pesoTotal = skus.reduce(function(s,i){return s+(i.peso||0);},0);
+      // --- FIM DA NOVA LÓGICA ---
+
+      var boxes=[],unCarregadas=0;
+      var cx=0,cy=0,cz=0,maxH=0,maxD=0;
+      skus.forEach(function(s){
+        var rest=Math.ceil(s.qtd);
+        while(rest>0){
+          if(cx+s.w>vL+0.001){cx=0;cy+=maxH;maxH=0;}
+          if(cy+s.h>vA+0.001){cx=0;cy=0;maxH=0;cz+=maxD;maxD=0;}
+          if(cz+s.d>vC+0.001) break;
+          boxes.push({x:cx+s.w/2,y:cy+s.h/2,z:cz+s.d/2,w:s.w,h:s.h,d:s.d,cor:s.cor,nome:s.nome});
+          maxH=Math.max(maxH,s.h);
+          maxD=Math.max(maxD,s.d);
+          cx+=s.w;
+          unCarregadas+=Math.min(k,rest);
+          rest-=k;
+        }
+      });
+
+      var fardosNoBox=unCarregadas;
+      var fardosCortados=Math.max(0,Math.round(cxTotalOriginal)-fardosNoBox);
+      var volCortado=fardosCortados>0 ? volTotalOriginal*(fardosCortados/cxTotalOriginal) : 0;
 
   var temCorte=fardosCortados>0||pct>1;
   var cor=temCorte?"sim-err":pct>0.85?"sim-warn":"sim-ok";
